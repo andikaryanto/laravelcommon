@@ -13,12 +13,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/squizlabs/PHP_CodeSniffer.git",
-                "reference": "96f3bbe99212343f781684ff6dbdb64e7aa10fa3"
+                "reference": "cb3ef133034713536df910f269f1ae5fddadc7b4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/squizlabs/PHP_CodeSniffer/zipball/96f3bbe99212343f781684ff6dbdb64e7aa10fa3",
-                "reference": "96f3bbe99212343f781684ff6dbdb64e7aa10fa3",
+                "url": "https://api.github.com/repos/squizlabs/PHP_CodeSniffer/zipball/cb3ef133034713536df910f269f1ae5fddadc7b4",
+                "reference": "cb3ef133034713536df910f269f1ae5fddadc7b4",
                 "shasum": ""
             },
             "require": {
@@ -54,14 +54,15 @@
             "homepage": "https://github.com/squizlabs/PHP_CodeSniffer",
             "keywords": [
                 "phpcs",
-                "standards"
+                "standards",
+                "static analysis"
             ],
             "support": {
                 "issues": "https://github.com/squizlabs/PHP_CodeSniffer/issues",
                 "source": "https://github.com/squizlabs/PHP_CodeSniffer",
                 "wiki": "https://github.com/squizlabs/PHP_CodeSniffer/wiki"
             },
-            "time": "2022-08-13T07:18:23+00:00"
+            "time": "2023-05-27T06:19:15+00:00"
         }
     ],
     "aliases": [],

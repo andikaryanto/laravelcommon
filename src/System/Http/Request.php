@@ -4,7 +4,7 @@ namespace LaravelCommon\System\Http;
 
 use LaravelCommon\App\Repositories\User\TokenRepository;
 use Illuminate\Http\Request as HttpRequest;
-use LaravelCommon\App\Entities\User\Token;
+use LaravelCommon\App\Models\User\Token;
 use LaravelCommon\App\Http\Middleware\Hydrator;
 
 class Request extends HttpRequest
@@ -27,6 +27,13 @@ class Request extends HttpRequest
      * @var Hydrator
      */
     protected Hydrator $hydrator;
+
+    /**
+     *
+     *
+     * @var mixed
+     */
+    protected $resource;
 
     /**
      * Undocumented function
@@ -59,19 +66,6 @@ class Request extends HttpRequest
     {
         $this->resource = $entity;
         return $this;
-    }
-
-    /**
-     * hydrate resource
-     *
-     * @param mixed $entity
-     * @return void
-     */
-    public function hyrdateResource($entity)
-    {
-        $this->setResource($entity);
-        $json = $this->input();
-        $this->resource->hydrate($json);
     }
 
     /**

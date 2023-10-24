@@ -7,6 +7,19 @@ use Illuminate\Database\Schema\ColumnDefinition;
 
 class Blueprint extends SchemaBlueprint
 {
+    public const STRING_25 = '25';
+    public const STRING_50 = '50';
+    public const STRING_100 = '100';
+    public const STRING_200 = '200';
+    public const STRING_255 = '255';
+    public const STRING_SUPERSMALL = '5';
+    public const STRING_EXTRASMALL = '10';
+    public const STRING_SMALL = '25';
+    public const STRING_MEDIUM = '50';
+    public const STRING_LARGE = '100';
+    public const STRING_EXTRALARGE = '255';
+    public const STRING_SUPERLARGE = '1000';
+
     /**
      * created_by and updated_by column
      *

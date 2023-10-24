@@ -2,13 +2,12 @@
 
 namespace LaravelCommon\App\Repositories\User;
 
-use LaravelCommon\App\Entities\User\Token;
-use LaravelCommon\App\Repositories\BaseRepository;
+use LaravelCommon\App\Models\User\Token;
+use LaravelCommon\App\Repositories\Repository;
 use LaravelCommon\App\ViewModels\User\TokenCollection;
 use LaravelCommon\App\ViewModels\User\TokenViewModel;
 
-class TokenRepository extends BaseRepository implements
-    TokenRepositoryInterface
+class TokenRepository extends Repository
 {
     /**
     * Constrcutor

@@ -8,12 +8,12 @@ use Exception;
 use LaravelCommon\App\Consts\ResponseConst;
 use LaravelCommon\Exceptions\ResponsableException;
 use LaravelCommon\Responses\BadRequestResponse;
-use LaravelOrm\Exception\EntityException;
-use LaravelOrm\Exception\ValidationException;
+use LaravelCommon\Exceptions\ModelException;
+use LaravelCommon\Exceptions\ValidationException;
 
 class ResourceValidation
 {
-    public const NAME = 'resource-validation';
+    public const NAME = 'common.app.middleware.resource-validation';
 
     /**
      * Handle an incoming request.
@@ -26,10 +26,10 @@ class ResourceValidation
     {
         $resource = $request->getResource();
         try {
-            $resource->validate();
+            // $resource->validate();
         } catch (ValidationException $e) {
             throw new ResponsableException($e->getMessage(), new BadRequestResponse($e->getMessage(), ResponseConst::INVALID_DATA));
-        } catch (EntityException $e) {
+        } catch (ModelException $e) {
             throw new ResponsableException($e->getMessage(), new BadRequestResponse($e->getMessage(), ResponseConst::INVALID_DATA));
         } catch (Exception $e) {
             throw new ResponsableException($e->getMessage(), new BadRequestResponse($e->getMessage(), ResponseConst::FAILED_SAVE_DATA));

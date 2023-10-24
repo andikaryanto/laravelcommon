@@ -2,7 +2,8 @@
 
 namespace LaravelCommon\App\ViewModels\User;
 
-use LaravelCommon\App\Entities\User\Token;
+use LaravelCommon\App\Models\User\Token;
+use LaravelCommon\App\ViewModels\UserViewModel;
 use LaravelCommon\ViewModels\AbstractViewModel;
 use stdClass;
 
@@ -14,15 +15,20 @@ class TokenViewModel extends AbstractViewModel
     protected $isAutoAddResource = true;
 
     /**
-     * @var Token $entity
+     * @var Token $model
      */
-    protected $entity;
+    protected $model;
 
     /**
      * @inheritdoc
      */
-    public function addResource(array &$element)
+    public function addResource()
     {
+        $user = $this->model->user;
+        if ($user) {
+            $this->embedResource('user', new UserViewModel($user));
+        }
+        return $this;
     }
 
     /**
@@ -31,8 +37,8 @@ class TokenViewModel extends AbstractViewModel
     public function toArray()
     {
         return [
-            'token' => $this->entity->getToken(),
-            'expired_at' => $this->entity->getExpiredAt()->format('Y-m-d H:i:s')
+            'token' => $this->model->token,
+            'expired_at' => $this->model->expired_at
         ];
     }
 }

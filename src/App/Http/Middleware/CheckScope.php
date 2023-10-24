@@ -10,7 +10,7 @@ use LaravelCommon\Responses\UnauthorizedResponse;
 
 class CheckScope
 {
-    public const NAME = 'check-scope';
+    public const NAME = 'common.app.middleware.check-scope';
 
     /**
      * Handle an incoming request.
@@ -25,11 +25,11 @@ class CheckScope
         $user = $request->getUserToken()->getUser();
         $groupuser = $user->getGroupuser();
 
-        $userScopesMappings = $user->getUserScopeMappings();
+        $userScopes = $user->getScopes();
         if (count($scopes) > 0) {
-            if (!empty($userScopesMappings)) {
-                foreach ($userScopesMappings as $userScopesMapping) {
-                    if (in_array($userScopesMapping->getScope()->getName(), $scopes)) {
+            if (!empty($userScopes)) {
+                foreach ($userScopes as $userScope) {
+                    if (in_array($userScope->getName(), $scopes) || $userScope->getName() == 'superadmin') {
                         $isAuthorized = true;
                         break;
                     }
@@ -37,10 +37,10 @@ class CheckScope
             }
 
             if (!$isAuthorized && !empty($groupuser)) {
-                $groupuserScopeMappings = $groupuser->getGroupuserScopeMappings();
+                $groupuserScopes = $groupuser->getScopes();
                 if (!empty($groupuserScopes)) {
-                    foreach ($groupuserScopeMappings as $groupuserScopeMapping) {
-                        if (in_array($groupuserScopeMapping->getScope()->getName(), $scopes)) {
+                    foreach ($groupuserScopes as $groupScope) {
+                        if (in_array($groupScope->getName(), $scopes)  || $groupScope->getName() == 'superadmin') {
                             $isAuthorized = true;
                             break;
                         }

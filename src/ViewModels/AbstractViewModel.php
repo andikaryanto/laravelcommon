@@ -2,8 +2,9 @@
 
 namespace LaravelCommon\ViewModels;
 
-use LaravelOrm\Entities\EntityList;
-use LaravelOrm\Interfaces\IEntity;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
+use LaravelCommon\Responses\BaseResponse;
 
 abstract class AbstractViewModel
 {
@@ -12,13 +13,31 @@ abstract class AbstractViewModel
      */
     protected $isAutoAddResource = true;
 
-    protected $entity;
+    protected $model;
+
     /**
-     * @param IEntity $entity
+     * @var ?Request
      */
-    public function __construct(IEntity $entity)
+    protected $request;
+
+    /**
+     *
+     * @var array
+     */
+    protected $resource = [];
+
+    /**
+     * @param Model $model
+     */
+    public function __construct(Model $model, ?Request $request = null)
     {
-        $this->entity = $entity;
+        $this->model = $model;
+        $this->request = $request;
+    }
+
+    public function link()
+    {
+        return '#unimplemented';
     }
 
     /**
@@ -26,11 +45,55 @@ abstract class AbstractViewModel
      */
     public function finalArray()
     {
-        $array = $this->toArray();
+        $this->resource['id'] = $this->model->getId();
+
+        $this->resource = array_merge($this->resource, $this->toArray());
+
+        $this->resource['created_at'] =  !is_null($this->model->created_at)
+            ? $this->model->created_at->format('Y-m-d H:i:s')
+            : null;
+
+        $this->resource['updated_at'] = !is_null($this->model->updated_at)
+            ? $this->model->updated_at->format('Y-m-d H:i:s')
+            : null;
+
+        $this->resource['_link']['self'] =  config('app.url') . $this->link();
+
         if ($this->getIsAutoAddResource()) {
-            $this->addResource($array);
+            $this->addResource();
         }
-        return $array;
+        return $this->resource;
+    }
+
+    /**
+     * Undocumented function
+     *
+     * @param string $key
+     * @param AbstractViewModel|AbstractCollection $value
+     * @return void
+     */
+    public function embedResource(
+        string $key,
+        AbstractViewModel|AbstractCollection $value
+    ) {
+
+        if ($this->request != null && $this->request->getPathInfo() == '/graphql') {
+            if ($value instanceof AbstractViewModel) {
+                $this->resource[$key] = $value->finalArray();
+            }
+
+            if ($value instanceof AbstractCollection) {
+                $this->resource[$key] = $value->finalProcceed();
+            }
+        } else {
+            if ($value instanceof AbstractViewModel) {
+                $this->resource[BaseResponse::RESOURCES_KEY][$key] = $value->finalArray();
+            }
+
+            if ($value instanceof AbstractCollection) {
+                $this->resource[BaseResponse::RESOURCES_KEY][$key] = $value->finalProcceed();
+            }
+        }
     }
 
     /**
@@ -41,7 +104,7 @@ abstract class AbstractViewModel
     /**
      * Add resource to view model
      */
-    abstract public function addResource(array &$element);
+    abstract public function addResource();
 
     /**
      *  set auto add Resource
@@ -62,12 +125,12 @@ abstract class AbstractViewModel
     }
 
     /**
-     * Get entity instance
+     * Get model instance
      *
      * @return mixed
      */
     public function getEntity()
     {
-        return $this->entity;
+        return $this->model;
     }
 }

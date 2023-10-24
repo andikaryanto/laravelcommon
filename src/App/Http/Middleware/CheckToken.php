@@ -2,35 +2,47 @@
 
 namespace LaravelCommon\App\Http\Middleware;
 
+use Carbon\Carbon;
 use Closure;
 use DateTime;
 use Exception;
 use LaravelCommon\App\Consts\ResponseConst;
-use LaravelCommon\App\Entities\User\Token;
+use LaravelCommon\App\Models\User\Token;
+use LaravelCommon\App\Queries\User\TokenQuery;
 use LaravelCommon\App\Repositories\User\TokenRepository;
+use LaravelCommon\App\Services\Jwt;
 use LaravelCommon\Responses\BadRequestResponse;
 use LaravelCommon\Responses\UnauthorizedResponse;
 use LaravelCommon\System\Http\Request;
 
 class CheckToken
 {
-    public const NAME = 'check-token';
+    public const NAME = 'common.app.middlware.check-token';
 
     /**
      *
-     * @var TokenRepository
+     * @var TokenQuery
      */
-    protected TokenRepository $tokenRepository;
+    protected TokenQuery $tokenQuery;
+
+    /**
+     *
+     * @var Jwt
+     */
+    protected Jwt $jwt;
 
     /**
      * Undocumented function
      *
-     * @param TokenRepository $tokenRepository
+     * @param TokenQuery $tokenRepository
+     * @param Jwt $jwt
      */
     public function __construct(
-        TokenRepository $tokenRepository
+        TokenQuery $tokenQuery,
+        Jwt $jwt
     ) {
-        $this->tokenRepository = $tokenRepository;
+        $this->tokenQuery = $tokenQuery;
+        $this->jwt = $jwt;
     }
 
     /**
@@ -44,27 +56,38 @@ class CheckToken
     {
         try {
             if ($request->hasHeader('Authorization')) {
-                $authorization = $request->header('Authorization');
-                $now = new DateTime();
+                $bearerAuthorization = $request->header('Authorization');
+                if (empty($bearerAuthorization)) {
+                    return new BadRequestResponse('Token is empty', ResponseConst::INVALID_CREDENTIAL);
+                }
 
-                $param = [
-                    'where' => [
-                        ['token', '=', $authorization],
-                    ]
-                ];
+                $authorizationArr = explode(' ', $bearerAuthorization);
+
+                if (count($authorizationArr) == 1) {
+                    return new BadRequestResponse('Token is invalid', ResponseConst::INVALID_CREDENTIAL);
+                }
+
+                $authorization = $authorizationArr[1];
 
                 /**
                  * @var Token $userToken
                  */
-                $userToken = $this->tokenRepository->findOne($param);
+                $userToken = $this->tokenQuery->whereToken($authorization)->getIterator()->first();
                 if (empty($userToken)) {
                     return new BadRequestResponse('Invalid Token', ResponseConst::INVALID_CREDENTIAL);
                 }
 
-                if ($userToken->getExpiredAt() < $now) {
-                    return new BadRequestResponse('Token Expired', ResponseConst::INVALID_CREDENTIAL);
+                if ($userToken->getExpiredAt() < Carbon::now()) {
+                    return new BadRequestResponse('Token Expired', ResponseConst::SESSION_EXPIRED);
                 }
-                $userToken->getUser();
+                $user = $userToken->getUser();
+
+                $jwtPayload = $this->jwt->decodeUserToken($authorization);
+
+                if ($user->getPassword() != $jwtPayload->password) {
+                    return new BadRequestResponse('Invalid Token', ResponseConst::INVALID_CREDENTIAL);
+                }
+
                 $request->setUserToken($userToken);
             } else {
                 return new UnauthorizedResponse('No Authorization header found', ResponseConst::NOT_AUTHORIZED);

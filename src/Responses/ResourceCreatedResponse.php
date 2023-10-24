@@ -2,7 +2,7 @@
 
 namespace LaravelCommon\Responses;
 
-class ResourceCreatedResponse extends BaseResponse
+class ResourceCreatedResponse extends JsonResponse
 {
     public function __construct(string $message, $responseCode = [], $data = null)
     {

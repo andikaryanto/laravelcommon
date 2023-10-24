@@ -2,14 +2,12 @@
 
 namespace LaravelCommon\Responses;
 
-use LaravelCommon\App\Services\UrlLink;
-use LaravelCommon\ViewModels\AbstractCollection;
-use LaravelCommon\ViewModels\AbstractViewModel;
-use LaravelCommon\ViewModels\PaggedCollection;
-use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Http\Response as HttpResponse;
 
-class BaseResponse extends Response implements ResponseInterface
+class BaseResponse extends HttpResponse implements ResponseInterface
 {
+    public const RESOURCES_KEY = '_resources';
+
     /**
      * @var string
      */
@@ -21,6 +19,11 @@ class BaseResponse extends Response implements ResponseInterface
     protected $data;
 
     /**
+     * @var
+     */
+    protected $additionalData;
+
+    /**
      * @var integer
      */
     protected int $code;
@@ -30,13 +33,24 @@ class BaseResponse extends Response implements ResponseInterface
      */
     protected array $reponseCode;
 
-    public function __construct(string $message, int $code, $reponseCode, $data = null)
+    public function __construct(string $message, int $code, $reponseCode, $data = [], $additionalData = [])
     {
-         $this->message     = $message;
-         $this->data        = $data;
-         $this->code        = $code;
-         $this->reponseCode = $reponseCode;
-         parent::__construct(json_encode($data), $code);
+        $this->message = $message;
+        $this->data = $data;
+        $this->additionalData = $additionalData;
+        $this->code = $code;
+        $this->reponseCode = $reponseCode;
+        parent::__construct(json_encode($data), $code);
+    }
+
+    public function setData($data = null)
+    {
+        $this->data = $data;
+    }
+
+    public function setAdditional($additionalData)
+    {
+        $this->additionalData = $additionalData;
     }
 
     /**
@@ -50,42 +64,17 @@ class BaseResponse extends Response implements ResponseInterface
     /**
      * @inheritdoc
      */
-    public function send()
+    public function sendJson()
     {
-        $json = [];
 
-        if ($this->data instanceof PaggedCollection) {
-            $json['paging']['next_page'] = $this->data->getNextPage();
-            $json['paging']['prev_page'] = $this->data->getPreviousPage();
-            $json['paging']['total_page'] = $this->data->getTotalPage();
-            $json['paging']['page'] = $this->data->getPage();
-            $json['paging']['size'] = $this->data->getSize();
-            $json['paging']['total_record'] = $this->data->getTotalRecord();
-
-            $links = UrlLink::createLinks($this->data);
-
-            $json['links'] = $links;
-        }
+        $data = [BaseResponse::RESOURCES_KEY => $this->data];
+        $data = array_merge($data, $this->additionalData);
 
         $json['message'] = $this->message;
-        $json['data'] = $this->proceededData();
+        $json['data'] = $data;
         $json['response'] = $this->reponseCode;
 
         return response()->json($json, $this->code);
-    }
-
-    private function proceededData()
-    {
-        if ($this->data instanceof AbstractCollection) {
-            return $this->data->proceed()->getElements();
-        }
-
-        if ($this->data instanceof AbstractViewModel) {
-            $array = $this->data->finalArray();
-            return $array;
-        }
-
-        return $this->data;
     }
 
     /**

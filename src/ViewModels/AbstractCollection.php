@@ -2,32 +2,35 @@
 
 namespace LaravelCommon\ViewModels;
 
-use LaravelOrm\Entities\EntityList;
-use LaravelOrm\Interfaces\IEntity;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Collection;
+use LaravelCommon\App\Queries\Query;
 
 abstract class AbstractCollection
 {
-    protected $collection;
+    protected Collection $collection;
+    protected Query $query;
+    protected ?Request $request;
     protected array $element = [];
 
-    /**
-     * @param array|EntityList $collection
-     */
-    public function __construct($collection)
+    public function __construct(Query $query, ?Request $request = null)
     {
-        $this->collection = $collection;
+        $this->query = $query;
+        $this->request = $request;
     }
 
     /**
      * Eloquent to View Model
      */
-    abstract public function shape(IEntity $entity);
+    abstract public function shape(Model $model);
 
     /**
      * proceed shaping to view model
      */
     public function proceed()
     {
+        $this->collection = $this->query->getIterator();
         foreach ($this->collection as $item) {
             $this->shape($item);
         }
@@ -45,8 +48,7 @@ abstract class AbstractCollection
      */
     public function addItem(AbstractViewModel $viewModel): void
     {
-        $items = $viewModel->toArray();
-        $viewModel->addResource($items, $this->collection);
+        $items = $viewModel->finalArray();
         $this->element[] = $items;
     }
 

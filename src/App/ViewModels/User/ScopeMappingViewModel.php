@@ -2,8 +2,10 @@
 
 namespace LaravelCommon\App\ViewModels\User;
 
-use LaravelCommon\App\Entities\User;
-use LaravelCommon\App\Entities\User\ScopeMapping;
+use LaravelCommon\App\Models\User;
+use LaravelCommon\App\Models\User\ScopeMapping;
+use LaravelCommon\App\ViewModels\ScopeViewModel;
+use LaravelCommon\App\ViewModels\UserViewModel;
 use LaravelCommon\ViewModels\AbstractViewModel;
 use stdClass;
 
@@ -15,24 +17,25 @@ class ScopeMappingViewModel extends AbstractViewModel
     protected $isAutoAddResource = true;
 
     /**
-     * @var ScopeMapping $entity
+     * @var ScopeMapping $model
      */
-    protected $entity;
+    protected $model;
 
     /**
      * @inheritdoc
      */
-    public function addResource(array &$element)
+    public function addResource()
     {
-        $user = $this->entity->getUser();
+        $user = $this->model->user;
         if (!empty($user)) {
-            $element['user'] = $user;
+            $this->embedResource('user', new UserViewModel($user, $this->request));
         }
 
-        $scope = $this->entity->getScope();
+        $scope = $this->model->scope;
         if (!empty($scope)) {
-            $element['scope'] = $scope;
+            $this->embedResource('scope', new ScopeViewModel($scope, $this->request));
         }
+        return $this;
     }
 
     /**
@@ -41,7 +44,7 @@ class ScopeMappingViewModel extends AbstractViewModel
     public function toArray()
     {
         return [
-            'id' => $this->entity->getId()
+
         ];
     }
 }

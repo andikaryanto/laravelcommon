@@ -6,85 +6,85 @@ class ResponseConst extends BaseConts
 {
     //Success
     const OK = [
-        'Status' => 'OK',
-        'Code'   => 1000,
+        'status' => 'OK',
+        'code'   => 1000,
     ];
 
     //Fail
     const INVALID_LOGIN         = [
-        'Status' => 'INVALID_LOGIN',
-        'Code'   => 2000,
+        'status' => 'INVALID_LOGIN',
+        'code'   => 2000,
     ];
     const NO_ACCESS_USER_MODULE = [
-        'Status' => 'NO_ACCESS_USER_MODULE',
-        'Code'   => 2001,
+        'status' => 'NO_ACCESS_USER_MODULE',
+        'code'   => 2001,
     ];
     const FAILED_SAVE_DATA      = [
-        'Status' => 'FAILED_SAVE_DATA',
-        'Code'   => 2002,
+        'status' => 'FAILED_SAVE_DATA',
+        'code'   => 2002,
     ];
     const DATA_NOT_FOUND        = [
-        'Status' => 'DATA_NOT_FOUND',
-        'Code'   => 2003,
+        'status' => 'DATA_NOT_FOUND',
+        'code'   => 2003,
     ];
     const FAILED_TO_VERIFY      = [
-        'Status' => 'FAILED_TO_VERIFY',
-        'Code'   => 2004,
+        'status' => 'FAILED_TO_VERIFY',
+        'code'   => 2004,
     ];
     const FAILED_TRACK_LOCATION = [
-        'Status' => 'FAILED_TRACK_LOCATION',
-        'Code'   => 2005,
+        'status' => 'FAILED_TRACK_LOCATION',
+        'code'   => 2005,
     ];
     const NO_DATA_FOUND         = [
-        'Status' => 'NO_DATA_FOUND',
-        'Code'   => 2006,
+        'status' => 'NO_DATA_FOUND',
+        'code'   => 2006,
     ];
     const DATA_EXIST            = [
-        'Status' => 'DATA_EXIST',
-        'Code'   => 2007,
+        'status' => 'DATA_EXIST',
+        'code'   => 2007,
     ];
     const INVALID_DATA          = [
-        'Status' => 'INVALID_DATA',
-        'Code'   => 2008,
+        'status' => 'INVALID_DATA',
+        'code'   => 2008,
     ];
     const FAILED_TO_REGISTER    = [
-        'Status' => 'FAILED_TO_REGISTER',
-        'Code'   => 2009,
+        'status' => 'FAILED_TO_REGISTER',
+        'code'   => 2009,
     ];
     const SESSION_EXPPIRED      = [
-        'Status' => 'SESSION_EXPPIRED',
-        'Code'   => 2010,
+        'status' => 'SESSION_EXPPIRED',
+        'code'   => 2010,
     ];
     const INVALID_CREDENTIAL    = [
-        'Status' => 'INVALID_CREDENTIAL',
-        'Code'   => 2011,
+        'status' => 'INVALID_CREDENTIAL',
+        'code'   => 2011,
     ];
     const FORBIDDEN             = [
-        'Status' => 'FORBIDDEN',
-        'Code'   => 2012,
+        'status' => 'FORBIDDEN',
+        'code'   => 2012,
     ];
     const FAILED_DELETE_DATA    = [
-        'Status' => 'FAILED_DELETE_DATA',
-        'Code'   => 2013,
+        'status' => 'FAILED_DELETE_DATA',
+        'code'   => 2013,
     ];
     const TOKEN_NOT_FOUND       = [
-        'Status' => 'TOKEN_NOT_FOUND',
-        'Code'   => 2014,
+        'status' => 'TOKEN_NOT_FOUND',
+        'code'   => 2014,
     ];
     const SESSION_EXPIRED       = [
-        'Status' => 'SESSION_EXPIRED',
-        'Code'   => 2015,
+        'status' => 'SESSION_EXPIRED',
+        'code'   => 2015,
     ];
     const PAGE_NOT_FOUND        = [
-        'Status' => 'PAGE_NOT_FOUND',
-        'Code'   => 2016,
+        'status' => 'PAGE_NOT_FOUND',
+        'code'   => 2016,
     ];
     const NOT_AUTHORIZED = [
-        'Status' => 'NOT_AUTHORIZED',
-        'Code'   => 2017,
+        'status' => 'NOT_AUTHORIZED',
+        'code'   => 2017,
     ];
     const NOT_ALLOWED_METHOD = [
-        'Status' => 'NOT_ALLOWED_METHOD',
-        'Code'   => 2018,
+        'status' => 'NOT_ALLOWED_METHOD',
+        'code'   => 2018,
     ];
 }

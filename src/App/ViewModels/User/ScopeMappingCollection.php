@@ -2,16 +2,16 @@
 
 namespace LaravelCommon\App\ViewModels\User;
 
+use Illuminate\Database\Eloquent\Model;
 use LaravelCommon\ViewModels\PaggedCollection;
-use LaravelOrm\Interfaces\IEntity;
 
 class ScopeMappingCollection extends PaggedCollection
 {
     /**
      * @inheritdoc
      */
-    public function shape(IEntity $entity)
+    public function shape(Model $model)
     {
-        $this->addItem(new ScopeMappingViewModel($entity));
+        $this->addItem(new ScopeMappingViewModel($model, $this->request));
     }
 }

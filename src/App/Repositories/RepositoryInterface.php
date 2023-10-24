@@ -2,7 +2,7 @@
 
 namespace LaravelCommon\App\Repositories;
 
-use LaravelOrm\Interfaces\IEntity;
+use Illuminate\Database\Eloquent\Model;
 
 interface RepositoryInterface
 {
@@ -26,5 +26,5 @@ interface RepositoryInterface
      * @param IEntity $entity
      * @return void
      */
-    public function validateEntity(IEntity $entity);
+    public function validateModel(Model $entity);
 }

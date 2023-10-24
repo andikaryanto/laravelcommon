@@ -13,7 +13,7 @@ class AlterUserScopeMappings extends Migration
      */
     public function up()
     {
-        Schema::table('user_scope_mappings', function (Blueprint $table) {
+        Schema::table('user_scopes', function (Blueprint $table) {
             $table->unsignedBigInteger('scope_id');
 
             $table->foreign('scope_id')

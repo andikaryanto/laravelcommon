@@ -4,10 +4,12 @@ namespace LaravelCommon\App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use LaravelCommon\App\Queries\UserQuery;
 use LaravelCommon\App\Repositories\UserRepository;
-use LaravelCommon\App\Services\UserService;
-use LaravelCommon\App\ViewModels\User\TokenViewModel;
 use LaravelCommon\App\ViewModels\UserCollection;
+use LaravelCommon\App\ViewModels\UserViewModel;
+use LaravelCommon\Responses\JsonResponse;
+use LaravelCommon\Responses\PagedJsonResponse;
 use LaravelCommon\Responses\SuccessResponse;
 
 class UserController extends Controller
@@ -15,25 +17,32 @@ class UserController extends Controller
     /**
      * Undocumented variable
      *
-     * @var UserRepository
+     * @var UserQuery
      */
-    protected UserRepository $userRepository;
+    protected UserQuery $userQuery;
 
     /**
      * Undocumented function
      *
-     * @param UserRepository $userRepository
+     * @param UserQuery $userRepository
      */
     public function __construct(
-        UserRepository $userRepository
+        UserQuery $userQuery
     ) {
-        $this->userRepository = $userRepository;
+        $this->userQuery = $userQuery;
+    }
+
+    public function store(Request $request)
+    {
+        $user = $request->getResource();
+
+        return new SuccessResponse('OK', [], new UserViewModel($user, $request));
     }
 
     public function getAll(Request $request)
     {
-        $users = $this->userRepository->gather();
+        $users = $this->userQuery;
 
-        return new SuccessResponse('OK', [], $users);
+        return new PagedJsonResponse('OK', [], new UserCollection($users, $request));
     }
 }

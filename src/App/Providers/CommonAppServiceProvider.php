@@ -3,22 +3,24 @@
 namespace LaravelCommon\App\Providers;
 
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Http\Request;
+use Illuminate\Routing\Route;
 use Illuminate\Support\ServiceProvider;
+use LaravelCommon\App\Console\Commands\CreateLoggingName;
+use LaravelCommon\App\Console\Commands\CreateScope;
+use LaravelCommon\App\Console\Commands\EnableLoggingName;
 use LaravelCommon\App\Console\Commands\GenerateEntity;
 use LaravelCommon\App\Http\Middleware\CheckScope;
 use LaravelCommon\App\Http\Middleware\CheckToken;
-use LaravelCommon\App\Http\Middleware\ControllerAfter;
-use LaravelCommon\App\Http\Middleware\EntityUnit;
+use LaravelCommon\App\Http\Middleware\ApiResponseMiddleware;
+use LaravelCommon\App\Http\Middleware\ModelUnit;
 use LaravelCommon\App\Http\Middleware\Hydrators\UserHydrator;
 use LaravelCommon\App\Http\Middleware\ResourceValidation;
-use LaravelCommon\App\Http\Middleware\RouteChecker;
 use LaravelCommon\System\Database\Schema\Blueprint as SchemaBlueprint;
+use Illuminate\Contracts\Http\Kernel;
 
 class CommonAppServiceProvider extends ServiceProvider
 {
     public $bindings = [
-        // Request::class => RequestRequest::class,
         Blueprint::class => SchemaBlueprint::class
     ];
 
@@ -50,7 +52,10 @@ class CommonAppServiceProvider extends ServiceProvider
 
         if ($this->app->runningInConsole()) {
             $this->commands([
-                GenerateEntity::class,
+                CreateLoggingName::class,
+                CreateScope::class,
+                EnableLoggingName::class,
+                GenerateEntity::class
             ]);
         }
     }
@@ -77,15 +82,22 @@ class CommonAppServiceProvider extends ServiceProvider
     {
         $router = $this->app['router'];
 
-        $router->aliasMiddleware(ControllerAfter::NAME, ControllerAfter::class);
-        // $router->aliasMiddleware('route-checker', RouteChecker::class);
-        $router->pushMiddlewareToGroup('api', ControllerAfter::class);
-        // $router->pushMiddlewareToGroup('api', RouteChecker::class);
-
+        $router->aliasMiddleware(ApiResponseMiddleware::NAME, ApiResponseMiddleware::class);
         $router->aliasMiddleware(CheckToken::NAME, CheckToken::class);
         $router->aliasMiddleware(CheckScope::NAME, CheckScope::class);
-        $router->aliasMiddleware(EntityUnit::NAME, EntityUnit::class);
+        $router->aliasMiddleware(ModelUnit::NAME, ModelUnit::class);
         $router->aliasMiddleware(ResourceValidation::NAME, ResourceValidation::class);
         $router->aliasMiddleware(UserHydrator::NAME, UserHydrator::class);
+
+        // Apply middleware to the 'api' middleware group
+    //    $router->middlewareGroup('api', [
+    //        ApiResponseMiddleware::class,
+    //    ]);
+        // $router->middleware('api', [
+        //     ApiResponseMiddleware::class,
+        // ]);
+
+        $kernel = $this->app->make(Kernel::class);
+        $kernel->pushMiddleware(ApiResponseMiddleware::class);
     }
 }

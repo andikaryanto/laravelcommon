@@ -2,16 +2,16 @@
 
 namespace LaravelCommon\App\ViewModels\User;
 
+use Illuminate\Database\Eloquent\Model;
 use LaravelCommon\ViewModels\PaggedCollection;
-use LaravelOrm\Interfaces\IEntity;
 
 class TokenCollection extends PaggedCollection
 {
     /**
      * @inheritdoc
      */
-    public function shape(IEntity $entity)
+    public function shape(Model $model)
     {
-        $this->addItem(new TokenViewModel($entity));
+        $this->addItem(new TokenViewModel($model, $this->request));
     }
 }

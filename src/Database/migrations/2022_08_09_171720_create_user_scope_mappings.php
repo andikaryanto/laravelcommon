@@ -13,7 +13,7 @@ class CreateUserScopeMappings extends Migration
      */
     public function up()
     {
-        Schema::create('user_scope_mappings', function (Blueprint $table) {
+        Schema::create('user_scopes', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->auditable();
@@ -31,6 +31,6 @@ class CreateUserScopeMappings extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('user_scope_mappings');
+        Schema::dropIfExists('user_scopes');
     }
 }

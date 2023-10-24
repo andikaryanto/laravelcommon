@@ -11,5 +11,19 @@ return [
     ],
     'collection_paging' => [
         'size' => 100
+    ],
+    'env' => [
+        'local' => [
+            'rollbar_access_token' => '',
+        ],
+        'test' => [
+            'rollbar_access_token' => '',
+        ],
+        'staging' => [
+            'rollbar_access_token' => '',
+        ],
+        'production' => [
+            'rollbar_access_token' => '',
+        ]
     ]
 ];

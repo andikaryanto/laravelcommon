@@ -167,7 +167,7 @@ class GenerateEntity extends Command
         $entityFile = "<?php
 namespace App\\{$this->getNameSpace()};
 
-use LaravelCommon\App\Entities\BaseEntity;
+use LaravelCommon\App\Models\BaseEntity;
 
 class {$this->getClassName()} extends BaseEntity
 {
@@ -221,49 +221,39 @@ class {$this->getClassName()} extends BaseEntity
             $schemInformation->Field != 'updated_at' &&
             $schemInformation->Field != 'updated_by'
         ) {
-            $type = '';
-            if (strpos($schemInformation->Type, 'int') !== false) {
-                $type = 'int';
-            } elseif (strpos($schemInformation->Type, 'varchar') !== false) {
-                $type = 'string';
-            } elseif (strpos($schemInformation->Type, 'tinyint(1)') !== false) {
-                $type = 'bool';
-            } elseif (
-                strpos($schemInformation->Type, 'timestamp') !== false ||
-                strpos($schemInformation->Type, 'datetime') !== false
-            ) {
-                $type = 'DateTime';
-            }
             $this->entityProps[] = [
                 'property' => $keyField,
                 'nullable' => $schemInformation->Null == 'YES',
-                'type' => $type
+                'type' => $this->getdbColumnType($schemInformation->Type)
             ];
         }
     }
 
+    protected function getdbColumnType(string $dbColumnType)
+    {
+        $type = '';
+        if (strpos($dbColumnType, 'int') !== false) {
+            $type = 'int';
+        } elseif (strpos($dbColumnType, 'varchar') !== false) {
+            $type = 'string';
+        } elseif (strpos($dbColumnType, 'tinyint(1)') !== false) {
+            $type = 'bool';
+        } elseif (strpos($dbColumnType, 'decimal') !== false) {
+            $type = 'float';
+        } elseif (
+            strpos($dbColumnType, 'timestamp') !== false ||
+            strpos($dbColumnType, 'datetime') !== false
+        ) {
+            $type = 'DateTime';
+        }
+        return $type;
+    }
+
     protected function createProp($schemInformation)
     {
-        // if($schemInformation->Field != 'created_at' &&
-        //     $schemInformation->Field != 'modified_at' &&
-        //     $schemInformation->Field != 'created_by' &&
-        //     $schemInformation->Field != 'modified_by'
-        // ){
-
         $propData['field'] = $schemInformation->Field;
         $propData['isEntity'] = false;
-        if (strpos($schemInformation->Type, 'int') !== false) {
-            $propData['type'] = 'int';
-        } elseif (strpos($schemInformation->Type, 'varchar') !== false) {
-            $propData['type'] = 'string';
-        } elseif (strpos($schemInformation->Type, 'tinyint(1)') !== false) {
-            $propData['type'] = 'bool';
-        } elseif (
-            strpos($schemInformation->Type, 'timestamp') !== false ||
-            strpos($schemInformation->Type, 'datetime') !== false
-        ) {
-            $propData['type'] = 'DateTime';
-        }
+        $propData['type'] = $this->getdbColumnType($schemInformation->Type);
 
         if ($schemInformation->Null == 'NO' && $schemInformation->Key != 'PRI') {
             $propData['rule'] = 'required';

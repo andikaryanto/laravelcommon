@@ -13,7 +13,7 @@ class CreateGroupuserScopeMappings extends Migration
      */
     public function up()
     {
-        Schema::create('groupuser_scope_mappings', function (Blueprint $table) {
+        Schema::create('groupuser_scopes', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('groupuser_id');
             $table->auditable();
@@ -32,6 +32,6 @@ class CreateGroupuserScopeMappings extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('groupuser_scope_mappings');
+        Schema::dropIfExists('groupuser_scopes');
     }
 }
