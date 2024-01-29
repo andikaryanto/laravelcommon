@@ -223,11 +223,18 @@ class HydratorMiddleware
             $relatedFunction = $relatedObjectGetter[1];
             $relatedObject = $relatedRepository->$relatedFunction($relatedValue);
 
-            if (is_null($relatedObject)) {
+            $relationNullable = false;
+            if (isset($relatedObjectGetter[2])) {
+                $relationNullable = $relatedObjectGetter[2];
+            }
+
+            if (is_null($relatedObject) && !$relationNullable) {
                 throw new ModelException($field . ' with ID ' . $relatedValue . ' not found');
             }
 
-            $model->$modelSetterFunction($relatedObject);
+            if (!is_null($relatedObject)) {
+                $model->$modelSetterFunction($relatedObject);
+            }
         }
 
         if (isset($input[$field]) && empty($relatedObjectGetter)) {
