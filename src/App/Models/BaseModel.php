@@ -3,11 +3,10 @@
 namespace LaravelCommon\App\Models;
 
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use LaravelCommon\App\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-trait TraitModel
+class BaseModel extends Model
 {
     /**
      *
@@ -32,9 +31,9 @@ trait TraitModel
     /**
      * Get the value of created_by
      */
-    public function getCreatedBy(): ?string
+    public function getCreatedBy(): ?User
     {
-        return $this->created_by;
+        return $this->createdBy;
     }
 
     /**
@@ -42,31 +41,47 @@ trait TraitModel
      *
      * @return  self
      */
-    public function setCreatedBy(?string $createdBy)
+    public function setCreatedBy(?User $createdBy)
     {
-        $this->created_by = $createdBy;
+        $this->createdBy()->associate($createdBy);
 
         return $this;
     }
 
     /**
-     * Get the value of updated_by
+     * @var BelongsTo
      */
-    public function getUpdatedBy(): ?string
+    public function createdBy(): BelongsTo
     {
-        return $this->updated_by;
+        return $this->belongsTo(User::class, 'created_by_id', 'id');
     }
 
     /**
-     * Set the value of updated_by
+     * Get the value of created_by
+     */
+    public function getUpdatedBy(): ?User
+    {
+        return $this->updatedBy;
+    }
+
+    /**
+     * Set the value of created_by
      *
      * @return  self
      */
-    public function setUpdatedBy(?string $updatedBy)
+    public function setUpdatedBy(?User $createdBy)
     {
-        $this->updated_by = $updatedBy;
+        $this->updatedBy()->associate($createdBy);
 
         return $this;
+    }
+
+    /**
+     * @var BelongsTo
+     */
+    public function updatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by_id', 'id');
     }
 
     /**

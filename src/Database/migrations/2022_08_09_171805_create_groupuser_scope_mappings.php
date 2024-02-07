@@ -16,7 +16,6 @@ class CreateGroupuserScopeMappings extends Migration
         Schema::create('groupuser_scopes', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('groupuser_id');
-            $table->auditable();
             $table->timestamps();
 
 

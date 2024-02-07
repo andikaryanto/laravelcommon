@@ -16,7 +16,6 @@ class CreateUserScopeMappings extends Migration
         Schema::create('user_scopes', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
-            $table->auditable();
             $table->timestamps();
 
             $table->foreign('user_id')

@@ -5,19 +5,17 @@ namespace LaravelCommon\App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use LaravelCommon\App\Database\Eloquent\Relations\BelongsToManyRelation;
 use LaravelCommon\App\Database\Eloquent\Relations\BelongsToRelation;
 
 // use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends AuthenticableBaseModel
 {
     // use HasApiTokens;
     use HasFactory;
     use Notifiable;
-    use TraitModel;
 
     protected $attributes = [
         'is_active' => true,

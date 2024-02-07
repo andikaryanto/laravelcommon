@@ -16,7 +16,6 @@ class CreateScopes extends Migration
         Schema::create('scopes', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->auditable();
             $table->timestamps();
         });
     }

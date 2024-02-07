@@ -18,7 +18,6 @@ class CreateGroupusers extends Migration
             $table->id();
             $table->string('group_name');
             $table->string('description')->nullable();
-            $table->auditable();
             $table->timestamps();
         });
     }

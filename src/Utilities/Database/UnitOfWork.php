@@ -6,6 +6,8 @@ use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use LaravelCommon\App\Database\Eloquent\Relations\BelongsToManyRelation;
+use LaravelCommon\App\Models\BaseModel;
+use LaravelCommon\App\Services\IncomingRequestService;
 use LaravelCommon\Exceptions\ValidationException;
 use ReflectionClass;
 use ReflectionProperty;
@@ -19,22 +21,38 @@ class UnitOfWork
 {
     private bool $isTransactionStarted = false;
 
+    protected IncomingRequestService $incomingRequestService;
+
+    public function __construct(
+        IncomingRequestService $incomingRequestService
+    ) {
+        $this->incomingRequestService = $incomingRequestService;
+    }
+
     /**
      * Prepare entity that will be validated and persisted.
      * Will persisted after entity unit flush
      *
      * @see entity Model->validate()
      *
-     * @param Model $model
+     * @param BaseModel $model
      * @param bool $needValidate - validate entity that will be persisted
      * @throws ValidationException
      * @return UnitOfWork
      */
-    public function persist(Model $model)
+    public function persist(BaseModel $model)
     {
         // $modelScope = ModelScope::getInstance();
         $this->startTransaction();
         try {
+            if (empty($model->getId()) && $this->incomingRequestService->getUser()) {
+                $model->setCreatedBy($this->incomingRequestService->getUser());
+            }
+
+            if (!empty($model->getId()) && $this->incomingRequestService->getUser()) {
+                $model->setUpdatedBy($this->incomingRequestService->getUser());
+            }
+
             $model->save();
 
             $reflectionClass = new ReflectionClass($model);

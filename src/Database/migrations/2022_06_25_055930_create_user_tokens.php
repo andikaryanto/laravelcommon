@@ -18,7 +18,6 @@ class CreateUserTokens extends Migration
             $table->unsignedBigInteger('user_id');
             $table->string('token', '500');
             $table->dateTime('expired_at');
-            $table->auditable();
             $table->timestamps();
 
             $table->foreign('user_id')

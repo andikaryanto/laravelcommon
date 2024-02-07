@@ -5,15 +5,13 @@ namespace LaravelCommon\App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use LaravelCommon\App\Database\Eloquent\Relations\BelongsToRelation;
-use LaravelCommon\App\Models\TraitModel;
+use LaravelCommon\App\Models\BaseModel;
 use LaravelCommon\App\Models\User;
 
-class Token extends Model
+class Token extends BaseModel
 {
     use HasFactory;
-    use TraitModel;
 
 
     protected $table = 'user_tokens';

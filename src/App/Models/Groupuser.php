@@ -7,11 +7,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use LaravelCommon\App\Database\Eloquent\Relations\BelongsToManyRelation;
 
-class Groupuser extends Model
+class Groupuser extends BaseModel
 {
     use HasFactory;
-    use TraitModel;
-
 
     protected BelongsToManyRelation $scopes;
 

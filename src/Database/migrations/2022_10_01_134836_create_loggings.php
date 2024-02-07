@@ -17,7 +17,6 @@ class CreateLoggings extends Migration
             $table->id();
             $table->string('name')->nullable(false);
             $table->boolean('is_enabled')->nullable(false)->default(false);
-            $table->auditable();
             $table->timestamps();
         });
     }

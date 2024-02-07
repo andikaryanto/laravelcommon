@@ -23,12 +23,21 @@ class Blueprint extends SchemaBlueprint
     /**
      * created_by and updated_by column
      *
-     * @return ColumnDefinition
+     * @return void
      */
-    public function auditable(): ColumnDefinition
+    public function auditable(): void
     {
-        $this->string('created_by')->nullable();
-        return $this->string('updated_by')->nullable();
+        $this->unsignedBigInteger('created_by_id')->nullable();
+
+        $this->foreign('created_by_id')
+            ->references('id')->on('users')->onDelete('restrict');
+
+        $this->unsignedBigInteger('updated_by_id')->nullable();
+
+        $this->foreign('updated_by_id')
+            ->references('id')->on('users')->onDelete('restrict');
+
+        return;
     }
 
     /**

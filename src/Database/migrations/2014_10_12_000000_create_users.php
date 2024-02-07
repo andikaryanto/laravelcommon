@@ -21,7 +21,6 @@ class CreateUsers extends Migration
             $table->string('password');
             $table->string('photo')->nullable();
             $table->boolean('is_active')->default(false);
-            $table->auditable();
             $table->timestamps();
 
             $table->foreign('groupuser_id')

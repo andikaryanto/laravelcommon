@@ -16,6 +16,8 @@ use LaravelCommon\App\Http\Middleware\Hydrators\UserHydratorMiddleware;
 use LaravelCommon\App\Http\Middleware\ResourceValidationMiddleware;
 use LaravelCommon\System\Database\Schema\Blueprint as SchemaBlueprint;
 use Illuminate\Contracts\Http\Kernel;
+use LaravelCommon\App\Services\IncomingRequestService;
+use LaravelCommon\System\Http\Request;
 use LaravelCommon\Utilities\Database\UnitOfWork as DatabaseUnitOfWork;
 
 class CommonAppServiceProvider extends ServiceProvider
@@ -32,7 +34,8 @@ class CommonAppServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->singleton(DatabaseUnitOfWork::class, function ($app) {
-            return new DatabaseUnitOfWork();
+            $incomingRequestService = $app->make(IncomingRequestService::class);
+            return new DatabaseUnitOfWork($incomingRequestService);
         });
     }
 
