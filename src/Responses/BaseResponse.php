@@ -32,14 +32,16 @@ class BaseResponse extends HttpResponse implements ResponseInterface
      * @var array
      */
     protected array $reponseCode;
+    protected bool $downloadAble;
 
-    public function __construct(string $message, int $code, $reponseCode, $data = [], $additionalData = [])
+    public function __construct(string $message, int $code, $reponseCode, $data = null, $additionalData = [], bool $downloadAble = false)
     {
         $this->message = $message;
         $this->data = $data;
         $this->additionalData = $additionalData;
         $this->code = $code;
         $this->reponseCode = $reponseCode;
+        $this->downloadAble = $downloadAble;
         parent::__construct(json_encode($data), $code);
     }
 
@@ -67,14 +69,18 @@ class BaseResponse extends HttpResponse implements ResponseInterface
     public function sendJson()
     {
 
-        $data = [BaseResponse::RESOURCES_KEY => $this->data];
-        $data = array_merge($data, $this->additionalData);
+        if (!$this->downloadAble) {
+            $data = [BaseResponse::RESOURCES_KEY => $this->data];
+            $data = array_merge($data, $this->additionalData);
 
-        $json['message'] = $this->message;
-        $json['data'] = $data;
-        $json['response'] = $this->reponseCode;
+            $json['message'] = $this->message;
+            $json['data'] = $data;
+            $json['response'] = $this->reponseCode;
 
-        return response()->json($json, $this->code);
+            return response()->json($json, $this->code);
+        } else {
+            return response()->download($this->data)->deleteFileAfterSend(true);
+        }
     }
 
     /**
