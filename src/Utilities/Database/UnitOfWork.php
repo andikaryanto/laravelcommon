@@ -6,6 +6,7 @@ use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use LaravelCommon\App\Database\Eloquent\Relations\BelongsToManyRelation;
+use LaravelCommon\App\Models\AuthenticableBaseModel;
 use LaravelCommon\App\Models\BaseModel;
 use LaravelCommon\App\Services\IncomingRequestService;
 use LaravelCommon\Exceptions\ValidationException;
@@ -35,12 +36,12 @@ class UnitOfWork
      *
      * @see entity Model->validate()
      *
-     * @param BaseModel $model
+     * @param BaseModel|AuthenticableBaseModel $model
      * @param bool $needValidate - validate entity that will be persisted
      * @throws ValidationException
      * @return UnitOfWork
      */
-    public function persist(BaseModel $model)
+    public function persist(BaseModel|AuthenticableBaseModel $model)
     {
         // $modelScope = ModelScope::getInstance();
         $this->startTransaction();

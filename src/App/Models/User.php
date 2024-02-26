@@ -55,12 +55,14 @@ class User extends AuthenticableBaseModel
 
     protected BelongsToManyRelation $scopes;
     protected BelongsToRelation $groupuser;
+    protected BelongsToRelation $branch;
 
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
         $this->scopes = new BelongsToManyRelation($this, Scope::class, 'user_scopes');
         $this->groupuser = new BelongsToRelation($this, Groupuser::class, 'groupuser_id');
+        $this->branch = new BelongsToRelation($this, Branch::class, 'branch_id');
     }
 
     /**
@@ -260,6 +262,26 @@ class User extends AuthenticableBaseModel
     {
         $this->password_changed_at = $passwordChangedAt;
 
+        return $this;
+    }
+
+    /**
+     *
+     * @return ?Branch
+     */
+    public function getBranch(): ?Branch
+    {
+        return $this->branch->get();
+    }
+
+    /**
+     *
+     * @param Branch $branch
+     * @return $this
+     */
+    public function setBranch(?Branch $branch = null): User
+    {
+        $this->branch->set($branch);
         return $this;
     }
 }
