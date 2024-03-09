@@ -25,8 +25,14 @@ class RequestValidatorMiddleware
         $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
+            $message = 'invalid request data';
+
+            foreach ($validator->errors()->getMessages() as $key => $messageData) {
+                $message = $messageData[0];
+            }
+
             return new JsonResponse(
-                'invalid request data',
+                $message,
                 Response::HTTP_BAD_REQUEST,
                 ResponseConst::INVALID_DATA,
                 $validator->errors()->getMessages()
