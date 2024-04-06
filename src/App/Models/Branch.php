@@ -45,7 +45,7 @@ class Branch extends BaseModel
      */
     public function setAddress(string $address): Branch
     {
-        $this->name = $address;
+        $this->address = $address;
         return $this;
     }
 
