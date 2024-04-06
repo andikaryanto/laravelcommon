@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Repositories;
+namespace LaravelCommon\App\Repositories;
 
 use LaravelCommon\App\Models\Branch;
 use LaravelCommon\App\ViewModels\BranchCollection;
