@@ -12,6 +12,10 @@ return [
             'app' => base_path() . '/app/Entities/Mapping'
         ]
     ],
+    'time_zone' => [
+        'use_custom_timezone' => true,
+        'time_zone' => 'Asia/Jakarta'
+    ],
     'env' => [
         'local' => [
             'rollbar_access_token' => '',

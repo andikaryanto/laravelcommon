@@ -46,14 +46,26 @@ abstract class AbstractViewModel
      */
     public function finalArray()
     {
+        $timeZone = config('common-config')['time_zone'];
+        $settingTimeZone = $timeZone['time_zone'];
+
+
         $this->resource = $this->toArray();
 
         $this->resource['created_at'] =  !is_null($this->model->created_at)
-            ? $this->model->created_at->format('Y-m-d H:i:s')
+            ? (
+                $timeZone['use_custom_timezone'] ?
+                $this->model->created_at->setTimeZOne($settingTimeZone)->format('Y-m-d H:i:s') :
+                $this->model->created_at->format('Y-m-d H:i:s')
+            )
             : null;
 
         $this->resource['updated_at'] = !is_null($this->model->updated_at)
-            ? $this->model->updated_at->format('Y-m-d H:i:s')
+            ? (
+                $timeZone['use_custom_timezone'] ?
+                $this->model->updated_at->setTimeZOne($settingTimeZone)->format('Y-m-d H:i:s') :
+                $this->model->updated_at->format('Y-m-d H:i:s')
+            )
             : null;
 
         $this->resource['_link']['self'] =  config('app.url') . $this->link();
