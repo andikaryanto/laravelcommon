@@ -3,6 +3,7 @@
 namespace LaravelCommon\Responses;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use LaravelCommon\App\Queries\Query;
 use LaravelCommon\Responses\CollectionResponse;
 use LaravelCommon\ViewModels\PaggedCollection;
