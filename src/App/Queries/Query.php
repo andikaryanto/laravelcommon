@@ -56,11 +56,6 @@ class Query extends Builder
         $this->fromSelect();
     }
 
-    public function loadWith()
-    {
-        return null;
-    }
-
     protected function getSelectColumns()
     {
         $columns = Schema::getColumnListing($this->model->getTable());
@@ -89,9 +84,7 @@ class Query extends Builder
         }
 
         $identityClass = get_class($this->model);
-        $collection = $identityClass::hydrate($models);
-
-        return $collection;
+        return $identityClass::hydrate($models);
     }
 
     public function joinWith($table, $first, $operator = null, $second = null, $type = 'inner', $where = false)

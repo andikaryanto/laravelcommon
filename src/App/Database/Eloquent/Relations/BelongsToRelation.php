@@ -48,7 +48,7 @@ class BelongsToRelation
             return $this->ownedModel;
         }
 
-        return $this->belongsTo()->getResults();
+        return $this->getBelongsTo()->getResults();
     }
 
     /**
@@ -59,7 +59,7 @@ class BelongsToRelation
     public function set(Model $ownedModel): BelongsToRelation
     {
         $this->ownedModel = $ownedModel;
-        $this->belongsTo()->associate($ownedModel);
+        $this->getBelongsTo()->associate($ownedModel);
         return $this;
     }
 
@@ -67,7 +67,7 @@ class BelongsToRelation
      *
      * @return BelongsTo
      */
-    public function belongsTo(): BelongsTo
+    private function getBelongsTo(): BelongsTo
     {
         return $this->ownerModel->belongsTo(
             $this->related,

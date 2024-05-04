@@ -3,7 +3,6 @@
 namespace LaravelCommon\Responses;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use LaravelCommon\App\Queries\Query;
 use LaravelCommon\Responses\CollectionResponse;
 use LaravelCommon\ViewModels\PaggedCollection;
@@ -38,7 +37,6 @@ class PagedJsonResponse extends CollectionResponse
      */
     public function buildData()
     {
-        DB::enableQueryLog();
         $this->collection->filterAndSortFromRequest();
 
         $data = $this->collection->finalArray();
@@ -60,10 +58,5 @@ class PagedJsonResponse extends CollectionResponse
             ];
             $this->setAdditional($json);
         }
-
-        $queries = DB::getQueryLog();
-
-        // Output the queries for inspection
-        dd($queries);
     }
 }

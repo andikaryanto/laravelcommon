@@ -31,11 +31,6 @@ abstract class AbstractCollection
     public function proceed()
     {
         $this->collection = $this->query->getIterator();
-
-        if (!empty($this->query->loadWith())) {
-            $this->collection->load($this->query->loadWith());
-        }
-
         foreach ($this->collection as $item) {
             $viewModel = $this->shape($item);
             if ($viewModel instanceof AbstractViewModel) {
