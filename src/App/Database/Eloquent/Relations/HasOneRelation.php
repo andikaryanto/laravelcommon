@@ -3,16 +3,15 @@
 namespace LaravelCommon\App\Database\Eloquent\Relations;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
-class BelongsToRelation extends AbstractRelation
+class HasOneRelation extends AbstractRelation
 {
     protected Model $ownerModel;
     protected ?Model $ownedModel = null;
     protected string $related;
     protected ?string $foreignKey = null;
-    protected ?string $ownerKey = null;
-    protected ?string $relation = null;
+    protected ?string $localkey = null;
 
     /**
      * Undocumented function
@@ -20,21 +19,18 @@ class BelongsToRelation extends AbstractRelation
      * @param Model $owningModel
      * @param string $related
      * @param string|null $foreignKey
-     * @param string|null $ownerKey
-     * @param string|null $relation
+     * @param string|null $localkey
      */
     public function __construct(
         Model $ownerModel,
         string $related,
         ?string $foreignKey = null,
-        ?string $ownerKey = null,
-        ?string $relation = null
+        ?string $localkey = null
     ) {
         $this->ownerModel = $ownerModel;
         $this->related = $related;
         $this->foreignKey = $foreignKey;
-        $this->ownerKey = $ownerKey;
-        $this->relation = $relation;
+        $this->localkey = $localkey;
     }
 
     /**
@@ -48,32 +44,19 @@ class BelongsToRelation extends AbstractRelation
             return $this->ownedModel;
         }
 
-        return $this->getRelation()->getResults();
+        return $this->getRelation()->get()->first();
     }
 
     /**
      *
-     * @param Model $ownedModel
-     * @return BelongsToRelation
+     * @return HasOne
      */
-    public function set(Model $ownedModel): BelongsToRelation
+    public function getRelation(): HasOne
     {
-        $this->ownedModel = $ownedModel;
-        $this->getRelation()->associate($ownedModel);
-        return $this;
-    }
-
-    /**
-     *
-     * @return BelongsTo
-     */
-    public function getRelation(): BelongsTo
-    {
-        return $this->ownerModel->belongsTo(
+        return $this->ownerModel->hasOne(
             $this->related,
             $this->foreignKey,
-            $this->ownerKey,
-            $this->relation
+            $this->localkey
         );
     }
 }

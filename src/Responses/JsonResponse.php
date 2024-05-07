@@ -2,6 +2,7 @@
 
 namespace LaravelCommon\Responses;
 
+use Illuminate\Support\Facades\DB;
 use LaravelCommon\ViewModels\AbstractViewModel;
 
 class JsonResponse extends BaseResponse
@@ -20,17 +21,22 @@ class JsonResponse extends BaseResponse
      */
     public function buildData()
     {
+        DB::enableQueryLog();
         if (is_null($this->data)) {
             return null;
         }
 
         $newData = null;
         if ($this->data instanceof AbstractViewModel) {
+            $this->data->loadRelation();
             $newData = $this->data->finalArray();
         } else {
             $newData = $this->data;
         }
 
         $this->setData($newData);
+
+        $quer = DB::getQueryLog();
+        dd($quer);
     }
 }

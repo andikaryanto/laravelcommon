@@ -38,6 +38,7 @@ class PagedJsonResponse extends CollectionResponse
      */
     public function buildData()
     {
+        // DB::enableQueryLog();
         $this->collection->filterAndSortFromRequest();
 
         $data = $this->collection->finalArray();
@@ -59,5 +60,8 @@ class PagedJsonResponse extends CollectionResponse
             ];
             $this->setAdditional($json);
         }
+
+        // $quer = DB::getQueryLog();
+        // dd($quer);
     }
 }

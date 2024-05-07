@@ -5,7 +5,10 @@ namespace LaravelCommon\App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use LaravelCommon\App\Database\Eloquent\Relations\BelongsToManyRelation;
 use LaravelCommon\App\Database\Eloquent\Relations\BelongsToRelation;
+use LaravelCommon\App\Database\Eloquent\Relations\HasManyRelation;
+use LaravelCommon\App\Database\Eloquent\Relations\HasOneRelation;
 use ReflectionClass;
 use ReflectionProperty;
 
@@ -136,8 +139,16 @@ class BaseModel extends Model
     // public function __get($name)
     // {
     //     if (property_exists($this, $name)) {
-    //         if ($this->$name instanceof BelongsToRelation) {
-    //             return $this->$name->get();
+    //         if (
+    //             $this->$name instanceof BelongsToRelation ||
+    //             $this->$name instanceof HasOneRelation
+    //         ) {
+    //             // return $this->getAttribute($name);
+    //             // return $this->$name->getRelation();
+    //             $relation = $this->$name->getRelation();
+    //             return tap($relation->getResults(), function ($results) use ($name) {
+    //                 $this->setRelation($name, $results);
+    //             });
     //         } else {
     //             return parent::__get($name);
     //         }
@@ -154,10 +165,19 @@ class BaseModel extends Model
             foreach ($properties as $property) {
                 if (
                     $property->getType() &&
-                    $property->getType()->getName() == BelongsToRelation::class &&
+                    (
+                        $property->getType()->getName() == BelongsToRelation::class ||
+                        $property->getType()->getName() == HasOneRelation::class ||
+                        $property->getType()->getName() == HasManyRelation::class ||
+                        $property->getType()->getName() == BelongsToManyRelation::class
+                    ) &&
                     $property->getName() == $method
                 ) {
-                    return $this->$method->belongsTo();
+                    // $relation = $this->$method->getRelation();
+                    // return tap($relation->getResults(), function ($results) use ($method) {
+                    //     $this->setRelation($method, $results);
+                    // });
+                    return $this->$method->getRelation();
                 }
             }
             return parent::__call($method, $parameters);

@@ -56,11 +56,6 @@ class Query extends Builder
         $this->fromSelect();
     }
 
-    public function loadWith()
-    {
-        return null;
-    }
-
     protected function getSelectColumns()
     {
         $columns = Schema::getColumnListing($this->model->getTable());
