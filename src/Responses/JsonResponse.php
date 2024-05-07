@@ -21,7 +21,7 @@ class JsonResponse extends BaseResponse
      */
     public function buildData()
     {
-        DB::enableQueryLog();
+        // DB::enableQueryLog();
         if (is_null($this->data)) {
             return null;
         }
@@ -36,7 +36,7 @@ class JsonResponse extends BaseResponse
 
         $this->setData($newData);
 
-        $quer = DB::getQueryLog();
-        dd($quer);
+        // $quer = DB::getQueryLog();
+        // dd($quer);
     }
 }
