@@ -2,12 +2,10 @@
 
 namespace LaravelCommon\App\ViewModels;
 
-use ArrayIterator;
 use Illuminate\Support\Collection;
 use LaravelCommon\App\Models\Groupuser;
 use LaravelCommon\App\Models\User;
 use LaravelCommon\ViewModels\AbstractViewModel;
-use stdClass;
 
 class UserViewModel extends AbstractViewModel
 {
@@ -25,7 +23,8 @@ class UserViewModel extends AbstractViewModel
     {
         return [
             'groupuser' => GroupuserViewModel::loadWith(),
-            'scopes' => ScopeViewModel::loadWith()
+            'scopes' => ScopeViewModel::loadWith(),
+            'branch' => BranchViewModel::loadWith()
         ];
     }
 
@@ -61,6 +60,11 @@ class UserViewModel extends AbstractViewModel
 
                 $this->embedResource('scopes', $scopeViewModels);
             }
+        }
+
+        $branch = $this->model->branch;
+        if (!empty($branch)) {
+            $this->embedResource('groupuser', new BranchViewModel($branch, $this->request));
         }
 
         return $this;
