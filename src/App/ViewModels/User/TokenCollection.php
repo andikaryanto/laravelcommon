@@ -12,7 +12,7 @@ class TokenCollection extends PaggedCollection
     {
         return TokenViewModel::loadWith();
     }
-        
+
     /**
      * @inheritdoc
      */

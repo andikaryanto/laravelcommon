@@ -12,7 +12,7 @@ class LoggingConfigCollection extends PaggedCollection
     {
         return LoggingConfigViewModel::loadWith();
     }
-    
+
     /**
      * @inheritdoc
      */
