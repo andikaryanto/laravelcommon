@@ -8,7 +8,12 @@ use LaravelCommon\App\ViewModels\UserViewModel;
 use LaravelCommon\ViewModels\PaggedCollection;
 
 class UserCollection extends PaggedCollection
-{
+{   
+    public function loadWith(): array
+    {
+        return UserViewModel::loadWith();
+    }
+
     /**
      * @inheritdoc
      */

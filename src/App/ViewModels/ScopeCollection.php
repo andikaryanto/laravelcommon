@@ -8,6 +8,11 @@ use LaravelCommon\ViewModels\PaggedCollection;
 
 class ScopeCollection extends PaggedCollection
 {
+    public function loadWith(): array
+    {
+        return ScopeViewModel::loadWith();
+    }
+
     /**
      * @inheritdoc
      */

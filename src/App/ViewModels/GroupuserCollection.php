@@ -8,6 +8,11 @@ use LaravelCommon\ViewModels\PaggedCollection;
 
 class GroupuserCollection extends PaggedCollection
 {
+    public function loadWith(): array
+    {
+        return GroupuserViewModel::loadWith();
+    }
+
     /**
      * @inheritdoc
      */

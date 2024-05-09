@@ -8,6 +8,11 @@ use LaravelCommon\ViewModels\PaggedCollection;
 
 class LoggingConfigCollection extends PaggedCollection
 {
+    public function loadWith(): array
+    {
+        return LoggingConfigViewModel::loadWith();
+    }
+    
     /**
      * @inheritdoc
      */

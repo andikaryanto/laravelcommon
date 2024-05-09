@@ -8,6 +8,11 @@ use LaravelCommon\ViewModels\PaggedCollection;
 
 class TokenCollection extends PaggedCollection
 {
+    public function loadWith(): array
+    {
+        return TokenViewModel::loadWith();
+    }
+        
     /**
      * @inheritdoc
      */

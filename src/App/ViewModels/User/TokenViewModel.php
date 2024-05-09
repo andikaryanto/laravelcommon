@@ -19,6 +19,13 @@ class TokenViewModel extends AbstractViewModel
      */
     protected $model;
 
+    public static function loadWith()
+    {
+        return [
+            'user' => UserViewModel::loadWith()
+        ];
+    }
+
     /**
      * @inheritdoc
      */
