@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use IteratorAggregate;
 
-class BelongsToManyRelation implements IteratorAggregate
+class BelongsToManyRelation extends AbstractRelation implements IteratorAggregate
 {
     protected Collection $addModelCollection;
     protected Collection $removeModelCollection;
@@ -76,7 +76,7 @@ class BelongsToManyRelation implements IteratorAggregate
      */
     public function add(Model $model): BelongsToManyRelation
     {
-        $existCollection = $this->getBelongsToMany()->get();
+        $existCollection = $this->getRelation()->get();
         $alreadyIn = $existCollection->filter(
             function ($existModel) use ($model) {
                 return $existModel->isEqualTo($model);
@@ -161,7 +161,7 @@ class BelongsToManyRelation implements IteratorAggregate
         }
 
         $allCollection = new Collection();
-        $existCollection = $this->getBelongsToMany()->get();
+        $existCollection = $this->getRelation()->get();
 
         foreach ($existCollection as $existModel) {
             $allCollection->add($existModel);
@@ -183,7 +183,7 @@ class BelongsToManyRelation implements IteratorAggregate
     {
         if ($this->addModelCollection->count() > 0) {
             foreach ($this->addModelCollection as $addModel) {
-                $this->getBelongsToMany()->attach($addModel);
+                $this->getRelation()->attach($addModel);
             }
             $this->addModelCollection = new Collection();
         }
@@ -198,7 +198,7 @@ class BelongsToManyRelation implements IteratorAggregate
     {
         if ($this->removeModelCollection->count() > 0) {
             foreach ($this->removeModelCollection as $removeModel) {
-                $this->getBelongsToMany()->detach($removeModel);
+                $this->getRelation()->detach($removeModel);
             }
             $this->removeModelCollection = new Collection();
         }
@@ -208,7 +208,7 @@ class BelongsToManyRelation implements IteratorAggregate
      *
      * @return BelongsToMany
      */
-    protected function getBelongsToMany(): BelongsToMany
+    public function getRelation(): BelongsToMany
     {
         return $this->parentModel->belongsToMany(
             $this->related,
@@ -228,7 +228,7 @@ class BelongsToManyRelation implements IteratorAggregate
      */
     public function doSync()
     {
-        $this->getBelongsToMany()->sync($this->syncModelColection);
+        $this->getRelation()->sync($this->syncModelColection);
     }
 
     /**

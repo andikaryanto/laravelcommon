@@ -21,6 +21,14 @@ class UserViewModel extends AbstractViewModel
      */
     protected $model;
 
+    public static function loadWith()
+    {
+        return [
+            'groupuser' => GroupuserViewModel::loadWith(),
+            'scopes' => ScopeViewModel::loadWith()
+        ];
+    }
+
     public function link()
     {
         return '/user/' . $this->model->getId();
@@ -34,7 +42,7 @@ class UserViewModel extends AbstractViewModel
         /**
          * @var Groupuser $groupuser
          */
-        $groupuser = $this->model->getGroupuser();
+        $groupuser = $this->model->groupuser;
         if (!empty($groupuser)) {
             $this->embedResource('groupuser', new GroupuserViewModel($groupuser, $this->request));
         }
@@ -44,7 +52,7 @@ class UserViewModel extends AbstractViewModel
             $this->request->get('embed') &&
             in_array('scope', $this->request->get('embed'))
         ) {
-            $scopes = $this->model->getScopes();
+            $scopes = $this->model->scopes;
             if ($scopes->count() > 0) {
                 $scopeViewModels = new Collection();
                 foreach ($scopes as $scope) {
@@ -54,6 +62,7 @@ class UserViewModel extends AbstractViewModel
                 $this->embedResource('scopes', $scopeViewModels);
             }
         }
+
         return $this;
     }
 

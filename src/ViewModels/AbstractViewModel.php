@@ -41,6 +41,16 @@ abstract class AbstractViewModel
         return '#unimplemented';
     }
 
+    public static function loadWith()
+    {
+        return [];
+    }
+
+    public function loadRelation()
+    {
+        $this->model->load(static::loadWith());
+    }
+
     /**
      * Convert instance to array add auto add resource available
      */
@@ -165,6 +175,11 @@ abstract class AbstractViewModel
      * @return mixed
      */
     public function getEntity()
+    {
+        return $this->model;
+    }
+
+    public function getModel()
     {
         return $this->model;
     }

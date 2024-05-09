@@ -20,6 +20,18 @@ abstract class AbstractCollection
         $this->request = $request;
     }
 
+    public function loadWith(): array
+    {
+        return [];
+    }
+
+    public function loadRelation()
+    {
+        if (!empty($this->loadWith())) {
+            $this->collection->load($this->loadWith());
+        }
+    }
+
     /**
      * Eloquent to View Model
      */
@@ -31,6 +43,7 @@ abstract class AbstractCollection
     public function proceed()
     {
         $this->collection = $this->query->getIterator();
+        $this->loadRelation();
         foreach ($this->collection as $item) {
             $viewModel = $this->shape($item);
             if ($viewModel instanceof AbstractViewModel) {
