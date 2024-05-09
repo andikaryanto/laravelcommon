@@ -64,7 +64,7 @@ class UserViewModel extends AbstractViewModel
 
         $branch = $this->model->branch;
         if (!empty($branch)) {
-            $this->embedResource('groupuser', new BranchViewModel($branch, $this->request));
+            $this->embedResource('branch', new BranchViewModel($branch, $this->request));
         }
 
         return $this;
