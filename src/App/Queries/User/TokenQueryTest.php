@@ -3,7 +3,6 @@
 namespace LaravelCommon\App\Queries\User;
 
 use Codeception\Specify;
-use LaravelCommon\App\Models\User\Token;
 use LaravelCommon\Tests\IntegrationTest;
 use Prophecy\PhpUnit\ProphecyTrait;
 

@@ -4,18 +4,12 @@ namespace LaravelCommon\App\Queries;
 
 use LaravelCommon\App\Queries\Query;
 use LaravelCommon\App\Models\User;
-use LaravelCommon\App\ViewModels\UserCollection;
 
 class UserQuery extends Query
 {
     public function identityClass(): string
     {
         return User::class;
-    }
-
-    public function collectionClass()
-    {
-        return UserCollection::class;
     }
 
     /**

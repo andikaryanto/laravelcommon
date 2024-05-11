@@ -2,23 +2,14 @@
 
 namespace LaravelCommon\App\Queries;
 
-use Illuminate\Database\ConnectionInterface;
 use LaravelCommon\App\Models\LoggingConfig;
 use LaravelCommon\App\Queries\Query;
-use LaravelCommon\App\ViewModels\LoggingConfigCollection;
-use Illuminate\Database\Query\Processors\Processor;
-use Illuminate\Database\Query\Grammars\Grammar;
 
 class LoggingConfigQuery extends Query
 {
     public function identityClass(): string
     {
         return LoggingConfig::class;
-    }
-
-    public function collectionClass()
-    {
-        return LoggingConfigCollection::class;
     }
 
     /**

@@ -219,18 +219,6 @@ class Query extends Builder
         // return get_class($this->model);
     }
 
-
-
-    /**
-     * get view model collection class
-     *
-     * @return string
-     */
-    public function collectionClass()
-    {
-        throw new Exception('"Query::collectionClass needs to be overridden"');
-    }
-
     /**
      *
      * @param array $ids

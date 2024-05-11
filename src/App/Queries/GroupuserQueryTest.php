@@ -4,7 +4,6 @@ namespace LaravelCommon\App\Queries;
 
 use Carbon\Carbon;
 use Codeception\Specify;
-use LaravelCommon\App\Models\Groupuser;
 use LaravelCommon\Tests\IntegrationTest;
 use Prophecy\PhpUnit\ProphecyTrait;
 
