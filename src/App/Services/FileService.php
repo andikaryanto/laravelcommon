@@ -99,12 +99,14 @@ class FileService
         $year = $dateTime->format('Y');
         $month = $dateTime->format('m');
 
+        // $path = 'public/' . $path;
         $path .= "$year/$month";
+        $publiPath = 'public/' . $path;
 
         if($this->hashedName) {
-            $path = $uploadedFile->store($path);
+            $path = $uploadedFile->store($publiPath);
         } else {
-            $path = $uploadedFile->storeAs($path, $uploadedFile->getClientOriginalName());
+            $path = $uploadedFile->storeAs($publiPath, $uploadedFile->getClientOriginalName());
         }
 
         if (is_bool($path)) {
@@ -117,6 +119,7 @@ class FileService
 
         $file = new File();
         $file->setName($path);
+        $file->setOriginalName($uploadedFile->getClientOriginalName());
         $file->setExtension($extension);
         $file->setMimeType($type);
         $file->setSize($size);
