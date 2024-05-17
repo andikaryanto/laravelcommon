@@ -101,7 +101,11 @@ class FileService
 
         $path .= "$year/$month";
 
-        $path = $uploadedFile->store($path);
+        if($this->hashedName) {
+            $path = $uploadedFile->store($path);
+        } else {
+            $path = $uploadedFile->storeAs($path, $uploadedFile->getClientOriginalName());
+        }
 
         if (is_bool($path)) {
             throw new Exception("Failed to move file");
