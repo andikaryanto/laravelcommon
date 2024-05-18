@@ -139,7 +139,7 @@ class File
      * Get undocumented variable
      *
      * @return  string
-     */ 
+     */
     public function getOriginalName()
     {
         return $this->originalName;
@@ -151,7 +151,7 @@ class File
      * @param  string  $originalName  Undocumented variable
      *
      * @return  self
-     */ 
+     */
     public function setOriginalName(string $originalName)
     {
         $this->originalName = $originalName;

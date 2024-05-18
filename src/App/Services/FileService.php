@@ -103,7 +103,7 @@ class FileService
         $path .= "$year/$month";
         $publiPath = 'public/' . $path;
 
-        if($this->hashedName) {
+        if ($this->hashedName) {
             $path = $uploadedFile->store($publiPath);
         } else {
             $path = $uploadedFile->storeAs($publiPath, $uploadedFile->getClientOriginalName());
@@ -174,5 +174,10 @@ class FileService
         foreach ($this->files as $file) {
             Storage::delete($file->getName());
         }
+    }
+
+    public function unlink($path)
+    {
+        Storage::delete($path);
     }
 }
