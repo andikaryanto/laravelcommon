@@ -56,10 +56,16 @@ class BelongsToRelation extends AbstractRelation
      * @param Model $ownedModel
      * @return BelongsToRelation
      */
-    public function set(Model $ownedModel): BelongsToRelation
+    public function set(?Model $ownedModel): BelongsToRelation
     {
-        $this->ownedModel = $ownedModel;
-        $this->getRelation()->associate($ownedModel);
+        if(!is_null(($ownedModel))) {
+            $this->ownedModel = $ownedModel;
+            $this->getRelation()->associate($ownedModel);
+        } else {
+            if(!is_null($this->ownedModel)) {
+                $this->getRelation()->dissociate();
+            }
+        }
         return $this;
     }
 
