@@ -99,7 +99,6 @@ class Query extends Builder
             }
         }
 
-        // echo 'jasasdsaoin';
         return  $this->join($table, $first, $operator, $second, $type, $where);
     }
 
@@ -115,7 +114,8 @@ class Query extends Builder
             $this->limit = null;
             $this->offset = null;
             $ids = $this->distinct()->pluck($this->table . '.' . $this->model->getKeyName());
-
+            
+            $newBuilder->joins = $this->joins;
             $newBuilder->fromSelect()
                 ->whereIdIn($ids->toArray());
             if ($this->getPage() &&  $this->getPerPage()) {
@@ -226,7 +226,7 @@ class Query extends Builder
      */
     public function whereIdIn(array $ids)
     {
-        $this->whereIn('id', $ids);
+        $this->whereIn($this->table . '.id', $ids);
         return $this;
     }
 
