@@ -59,6 +59,11 @@ class PagedJsonResponse extends CollectionResponse
                 'current_page' => $awarePaginator->url($awarePaginator->currentPage())
             ];
             $this->setAdditional($json);
+
+            if(count($data) == 0) {    
+                $this->setCode(204);
+            }
+        } else {
         }
 
         // $quer = DB::getQueryLog();
