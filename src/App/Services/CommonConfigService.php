@@ -6,7 +6,7 @@ class CommonConfigService
 {
     public function getValue(string $key): mixed
     {
-        if(isset(config('common-config')['env'][env('APP_ENV')][$key])) {
+        if (isset(config('common-config')['env'][env('APP_ENV')][$key])) {
             return config('common-config')['env'][env('APP_ENV')][$key];
         }
 

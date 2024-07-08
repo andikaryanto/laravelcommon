@@ -114,7 +114,7 @@ class Query extends Builder
             $this->limit = null;
             $this->offset = null;
             $ids = $this->distinct()->pluck($this->table . '.' . $this->model->getKeyName());
-            
+
             $newBuilder->joins = $this->joins;
             $newBuilder->fromSelect()
                 ->whereIdIn($ids->toArray());

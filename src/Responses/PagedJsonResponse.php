@@ -60,7 +60,7 @@ class PagedJsonResponse extends CollectionResponse
             ];
             $this->setAdditional($json);
 
-            if(count($data) == 0) {    
+            if (count($data) == 0) {
                 $this->setCode(204);
             }
         } else {

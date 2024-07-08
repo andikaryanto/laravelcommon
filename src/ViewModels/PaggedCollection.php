@@ -44,7 +44,7 @@ abstract class PaggedCollection extends AbstractCollection
         }
 
         if (!is_null($sortColumn)) {
-            if(str_contains($sortColumn ,'.')) {
+            if (str_contains($sortColumn, '.')) {
                 $this->query->orderBy($sortColumn, $sortDirection);
             } else {
                 $this->query->orderBy($table . '.' . $sortColumn, $sortDirection);

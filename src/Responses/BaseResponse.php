@@ -98,7 +98,8 @@ class BaseResponse extends HttpResponse implements ResponseInterface
         return $this->code;
     }
 
-    public function setCode(int $code) {
+    public function setCode(int $code)
+    {
         $this->code = $code;
     }
 }
