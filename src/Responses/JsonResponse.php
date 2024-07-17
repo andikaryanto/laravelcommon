@@ -28,8 +28,7 @@ class JsonResponse extends BaseResponse
 
         $newData = null;
         if ($this->data instanceof AbstractViewModel) {
-            $this->data->loadRelation();
-            $newData = $this->data->finalArray();
+            $newData = $this->data->loadRelation()->finalArray();
         } else {
             $newData = $this->data;
         }

@@ -49,6 +49,7 @@ abstract class AbstractViewModel
     public function loadRelation()
     {
         $this->model->load(static::loadWith());
+        return $this;
     }
 
     /**
