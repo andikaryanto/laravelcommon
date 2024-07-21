@@ -117,6 +117,7 @@ class Query extends Builder
 
             $newBuilder->joins = $this->joins;
             $newBuilder->fromSelect()
+                ->distinct()
                 ->whereIdIn($ids->toArray());
             if ($this->getPage() &&  $this->getPerPage()) {
                 $newBuilder->paging(
