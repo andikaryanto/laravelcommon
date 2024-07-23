@@ -186,7 +186,8 @@ class HydratorMiddleware
         $id = $request->route()->parameter($this->key);
         try {
             $resource = $this->repository->findOrFail($id);
-            $request->setPreviousResource($resource);
+            $previousResource = clone $resource;
+            $request->setPreviousResource($previousResource);
         } catch (ModelNotFoundException $e) {
             throw new ResponsableException($e->getMessage(), new NotFoundResponse('No Data Found'));
         }
