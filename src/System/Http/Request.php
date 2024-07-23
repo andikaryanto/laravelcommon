@@ -35,6 +35,12 @@ class Request extends HttpRequest
      * @var mixed
      */
     protected $resource;
+    /**
+     *
+     *
+     * @var mixed
+     */
+    protected $prevousResource;
 
     /**
      * Undocumented function
@@ -82,6 +88,29 @@ class Request extends HttpRequest
     public function getResource()
     {
         return $this->resource;
+    }    
+
+    /**
+     * Undocumented function
+     *
+     * @param mixed $entity
+     * @return Request
+     */
+    public function setPreviousResource($entity)
+    {
+        $this->prevousResource = $entity;
+        return $this;
+    }  
+
+    /**
+     * Undocumented function
+     *
+     * @param mixed $entity
+     * @return Request
+     */
+    public function getPreviousResource()
+    {
+        return $this->prevousResource;
     }
 
     /**
