@@ -125,7 +125,7 @@ class Query extends Builder
             if (!empty($this->page) && !empty($this->size)) {
                 $newBuilder->setPage($this->page)
                     ->setSize($this->size)
-                    ->paging();
+                    ->paging($newBuilder->getSelectColumns());
             }
 
             $newBuilder->orders = $this->orders;
@@ -133,7 +133,7 @@ class Query extends Builder
             $this->lengthAwarePaginator = $newBuilder->lengthAwarePaginator;
         } else {
             if (!empty($this->page) && !empty($this->size)) {
-                $this->paging();
+                $this->paging($this->getSelectColumns());
             }
         }
 
@@ -175,15 +175,11 @@ class Query extends Builder
     /**
      * paginate
      *
-     * @param integer $perPage
-     * @param integer|null $page
      * @param array $columns
      * @param string $pageName
      * @return Query
      */
-    public function paging(
-        // int $perPage = 15,
-        // ?int $page = null,
+    private function paging(
         array $columns = ['*'],
         string $pageName = 'page'
     ): Query {
