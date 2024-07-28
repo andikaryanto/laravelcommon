@@ -78,7 +78,7 @@ abstract class PaggedCollection extends AbstractCollection
             }
         }
 
-        return $this->query->paging($size, $page);
+        return $this->query->setPaging($page, $size);
     }
 
     /**

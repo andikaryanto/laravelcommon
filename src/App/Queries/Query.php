@@ -36,6 +36,9 @@ class Query extends Builder
     //     $this->fromSelect();
     // }
 
+    protected ?int $page = null;
+    protected ?int $size = null;
+
     /**
      * Create a new query builder instance.
      *
@@ -115,20 +118,23 @@ class Query extends Builder
             $this->offset = null;
             $ids = $this->distinct()->pluck($this->table . '.' . $this->model->getKeyName());
 
-            $newBuilder->joins = $this->joins;
+            // $newBuilder->joins = $this->joins;
             $newBuilder->fromSelect()
                 ->distinct()
                 ->whereIdIn($ids->toArray());
-            if ($this->getPage() &&  $this->getPerPage()) {
-                $newBuilder->paging(
-                    $this->getPerPage(),
-                    $this->getPage()
-                );
+            if (!empty($this->page) && !empty($this->size)) {
+                $newBuilder->setPage($this->page)
+                    ->setSize($this->size)
+                    ->paging($newBuilder->getSelectColumns());
             }
 
             $newBuilder->orders = $this->orders;
 
             $this->lengthAwarePaginator = $newBuilder->lengthAwarePaginator;
+        } else {
+            if (!empty($this->page) && !empty($this->size)) {
+                $this->paging($this->getSelectColumns());
+            }
         }
 
         return $this;
@@ -144,22 +150,40 @@ class Query extends Builder
         return $this->newQuery();
     }
 
+    public function setPage(int $page): Query
+    {
+        $this->page = $page;
+
+        return $this;
+    }
+
+    public function setSize(int $size): Query
+    {
+        $this->size = $size;
+
+        return $this;
+    }
+
+    public function setPaging(int $page, int $size): Query
+    {
+        $this->page = $page;
+        $this->size = $size;
+
+        return $this;
+    }
+
     /**
      * paginate
      *
-     * @param integer $perPage
-     * @param integer|null $page
      * @param array $columns
      * @param string $pageName
      * @return Query
      */
-    public function paging(
-        int $perPage = 15,
-        ?int $page = null,
+    private function paging(
         array $columns = ['*'],
         string $pageName = 'page'
     ): Query {
-        $this->lengthAwarePaginator = $this->paginate($perPage, $columns, $pageName, $page);
+        $this->lengthAwarePaginator = $this->paginate($this->size, $columns, $pageName, $this->page);
         return $this;
     }
 

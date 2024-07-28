@@ -88,7 +88,7 @@ class Request extends HttpRequest
     public function getResource()
     {
         return $this->resource;
-    }    
+    }
 
     /**
      * Undocumented function
@@ -100,7 +100,7 @@ class Request extends HttpRequest
     {
         $this->prevousResource = $entity;
         return $this;
-    }  
+    }
 
     /**
      * Undocumented function
