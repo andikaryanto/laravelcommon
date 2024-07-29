@@ -5,7 +5,6 @@ namespace LaravelCommon\App\Queries;
 use Exception;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Processors\Processor;
 use Illuminate\Database\Query\Grammars\Grammar;
 use Illuminate\Database\Query\Builder;
@@ -38,6 +37,7 @@ class Query extends Builder
 
     protected ?int $page = null;
     protected ?int $size = null;
+    protected ?int $total = 0;
 
     /**
      * Create a new query builder instance.
@@ -78,12 +78,13 @@ class Query extends Builder
      */
     public function getIterator($columns = ['*'])
     {
-        $this->onModelContext();
+        $builder = $this->onModelContext();
         $models = null;
-        if (!is_null($this->lengthAwarePaginator)) {
-            $models = $this->lengthAwarePaginator->items();
+        $lengthAwarePaginator = $builder->lengthAwarePaginator;
+        if (!is_null($lengthAwarePaginator)) {
+            $models = $lengthAwarePaginator->items();
         } else {
-            $models = $this->get($columns)->all();
+            $models = $builder->get($columns)->all();
         }
 
         $identityClass = get_class($this->model);
@@ -114,26 +115,34 @@ class Query extends Builder
     {
         if (!empty($this->joins)) {
             $newBuilder = new static($this->connection, $this->grammar, $this->getProcessor());
-            $this->limit = null;
-            $this->offset = null;
-            $ids = $this->distinct()->pluck($this->table . '.' . $this->model->getKeyName());
+            
+            $tableAndId = $this->table . '.' . $this->model->getKeyName();
+            $ids = $this->distinct()->pluck($tableAndId)->toArray();
 
-            // $newBuilder->joins = $this->joins;
-            $newBuilder->fromSelect()
-                ->distinct()
-                ->whereIdIn($ids->toArray());
             if (!empty($this->page) && !empty($this->size)) {
-                $newBuilder->setPage($this->page)
-                    ->setSize($this->size)
-                    ->paging($newBuilder->getSelectColumns());
+                $this->paging($this->page, $this->size, $this->getSelectColumns());
+                $this->total = $this->lengthAwarePaginator->total();
             }
 
-            $newBuilder->orders = $this->orders;
+            $lastSizedIds = $ids;
+            if (!empty($this->page) && !empty($this->size)) {
+                $lastSizedIds = array_slice($ids, $this->size * ($this->page - 1), $this->size);
+            }
 
-            $this->lengthAwarePaginator = $newBuilder->lengthAwarePaginator;
+            $newBuilder->fromSelect()
+                ->distinct()
+                ->whereIdIn($lastSizedIds)
+                ->orderByRaw('FIELD(' . $tableAndId . ', ' . implode(',', $lastSizedIds) . ')');
+
+            if (!empty($this->page) && !empty($this->size)) {
+                $newBuilder->paging(1, $this->size, $this->getSelectColumns());
+            }
+
+            return $newBuilder;
         } else {
             if (!empty($this->page) && !empty($this->size)) {
-                $this->paging($this->getSelectColumns());
+                $this->paging($this->page, $this->size, $this->getSelectColumns());
+                $this->total = $this->lengthAwarePaginator->total();
             }
         }
 
@@ -180,10 +189,12 @@ class Query extends Builder
      * @return Query
      */
     private function paging(
+        int $page,
+        int $size,
         array $columns = ['*'],
         string $pageName = 'page'
     ): Query {
-        $this->lengthAwarePaginator = $this->paginate($this->size, $columns, $pageName, $this->page);
+        $this->lengthAwarePaginator = $this->paginate($size, $columns, $pageName, $page);
         return $this;
     }
 
@@ -213,7 +224,7 @@ class Query extends Builder
      */
     public function getPage(): ?int
     {
-        return $this->lengthAwarePaginator?->currentPage();
+        return $this->page;
     }
 
     /** Get total data
@@ -222,7 +233,7 @@ class Query extends Builder
      */
     public function getTotal(): ?int
     {
-        return $this->lengthAwarePaginator?->total();
+        return $this->total;
     }
 
     /** Get total data
@@ -231,7 +242,7 @@ class Query extends Builder
      */
     public function getPerPage(): ?int
     {
-        return $this->lengthAwarePaginator?->perPage();
+        return $this->size;
     }
 
     /**
