@@ -131,8 +131,11 @@ class Query extends Builder
 
             $newBuilder->fromSelect()
                 ->distinct()
-                ->whereIdIn($lastSizedIds)
-                ->orderByRaw('FIELD(' . $tableAndId . ', ' . implode(',', $lastSizedIds) . ')');
+                ->whereIdIn($lastSizedIds);
+
+            if($this->orders) {
+                $newBuilder->orderByRaw('FIELD(' . $tableAndId . ', ' . implode(',', $lastSizedIds) . ')');
+            }
 
             if (!empty($this->page) && !empty($this->size)) {
                 $newBuilder->paging(1, $this->size, $this->getSelectColumns());
