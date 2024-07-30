@@ -125,7 +125,7 @@ class Query extends Builder
             }
 
             $lastSizedIds = $ids;
-            if (!empty($this->page) && !empty($this->size)) {
+            if (!empty($this->page) && !empty($this->size) && count($ids) > 0) {
                 $lastSizedIds = array_slice($ids, $this->size * ($this->page - 1), $this->size);
             }
 
@@ -133,7 +133,7 @@ class Query extends Builder
                 ->distinct()
                 ->whereIdIn($lastSizedIds);
 
-            if($this->orders) {
+            if($this->orders && count($lastSizedIds) > 0) {
                 // using WHEN Statement to order the data to suppor sqlite
                 foreach ($lastSizedIds as $index => $id) {
                     $orderByCases[] = "WHEN id = $id THEN $index";
