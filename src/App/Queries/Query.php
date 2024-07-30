@@ -134,7 +134,16 @@ class Query extends Builder
                 ->whereIdIn($lastSizedIds);
 
             if($this->orders) {
-                $newBuilder->orderByRaw('FIELD(' . $tableAndId . ', ' . implode(',', $lastSizedIds) . ')');
+                // using WHEN Statement to order the data to suppor sqlite
+                foreach ($lastSizedIds as $index => $id) {
+                    $orderByCases[] = "WHEN id = $id THEN $index";
+                }
+
+                $orderByCaseSql = 'CASE ' . implode(' ', $orderByCases) . ' END';
+                $newBuilder->orderByRaw($orderByCaseSql);
+
+                // TODO: SQLITE did not support this, we might need consider other way
+                // $newBuilder->orderByRaw('FIELD(' . $tableAndId . ', ' . implode(',', $lastSizedIds) . ')');
             }
 
             if (!empty($this->page) && !empty($this->size)) {
