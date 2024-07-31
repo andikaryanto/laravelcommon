@@ -118,11 +118,7 @@ class Query extends Builder
             
             $tableAndId = $this->table . '.' . $this->model->getKeyName();
             $ids = $this->distinct()->pluck($tableAndId)->toArray();
-
-            if (!empty($this->page) && !empty($this->size)) {
-                $this->paging($this->page, $this->size, $this->getSelectColumns());
-                $this->total = $this->lengthAwarePaginator->total();
-            }
+            $this->total = count($ids);
 
             $lastSizedIds = $ids;
             if (!empty($this->page) && !empty($this->size) && count($ids) > 0) {
@@ -149,6 +145,8 @@ class Query extends Builder
             if (!empty($this->page) && !empty($this->size)) {
                 $newBuilder->paging(1, $this->size, $this->getSelectColumns());
             }
+
+            $this->lengthAwarePaginator = $newBuilder->lengthAwarePaginator;
 
             return $newBuilder;
         } else {
@@ -211,7 +209,12 @@ class Query extends Builder
     }
 
     /**
-     *
+     * Be Aware, this is for get url only, 
+     * the value of current page, next page, prev page might not be relevant
+     * 
+     * when we are paginate the data
+     * this awarepaginator will always contains 1 page only with the size of it paging size.
+     * 
      * @return LengthAwarePaginator|null
      */
     public function getAwarePaginator(): ?LengthAwarePaginator

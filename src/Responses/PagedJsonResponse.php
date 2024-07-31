@@ -44,7 +44,6 @@ class PagedJsonResponse extends CollectionResponse
         $data = $this->collection->finalArray();
         $this->setData($data);
         if (!is_null($data)) {
-            $awarePaginator = $this->collection->getAwarePaginator();
             $json = [
                 '_paging' => [
                     'page' =>  $this->collection->getPage(),
@@ -54,9 +53,9 @@ class PagedJsonResponse extends CollectionResponse
             ];
 
             $json['_links'] = [
-                'next_page' => $awarePaginator->nextPageUrl(),
-                'prev_page' => $awarePaginator->previousPageUrl(),
-                'current_page' => $awarePaginator->url($awarePaginator->currentPage())
+                'next_page' => $this->collection->getNextUrl(),
+                'prev_page' => $this->collection->getPreviousUrl(), //$awarePaginator->previousPageUrl(),
+                'current_page' => $this->collection->getCurrentUrl()
             ];
             $this->setAdditional($json);
 

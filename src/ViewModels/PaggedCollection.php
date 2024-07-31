@@ -158,4 +158,19 @@ abstract class PaggedCollection extends AbstractCollection
     {
         return $this->query->getAwarePaginator();
     }
+
+    public function getNextUrl()
+    {
+        return $this->getAwarePaginator()->url($this->getNextPage());
+    }
+
+    public function getPreviousUrl()
+    {
+        return $this->getAwarePaginator()->url($this->getPreviousPage());
+    }
+
+    public function getCurrentUrl()
+    {
+        return $this->getAwarePaginator()->url($this->getPage());
+    }
 }
