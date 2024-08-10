@@ -62,7 +62,8 @@ class BelongsToRelation extends AbstractRelation
             $this->ownedModel = $ownedModel;
             $this->getRelation()->associate($ownedModel);
         } else {
-            if (!is_null($this->ownedModel)) {
+            $onwedPersistedModel = $this->getRelation()->getResults();
+            if (!is_null($onwedPersistedModel)) {
                 $this->getRelation()->dissociate();
             }
         }

@@ -199,7 +199,7 @@ class User extends AuthenticableBaseModel
      * @param Groupuser $groupuser
      * @return $this
      */
-    public function setGroupuser(Groupuser $groupuser): User
+    public function setGroupuser(?Groupuser $groupuser): User
     {
         $this->groupuser->set($groupuser);
         return $this;
