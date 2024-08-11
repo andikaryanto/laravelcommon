@@ -72,9 +72,9 @@ class BelongsToRelation extends AbstractRelation
 
     /**
      *
-     * @return BelongsTo
+     * @return mixed
      */
-    public function getRelation(): BelongsTo
+    public function getRelation(): mixed
     {
         return $this->ownerModel->belongsTo(
             $this->related,

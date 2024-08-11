@@ -49,9 +49,9 @@ class HasOneRelation extends AbstractRelation
 
     /**
      *
-     * @return HasOne
+     * @return mixed
      */
-    public function getRelation(): HasOne
+    public function getRelation(): mixed
     {
         return $this->ownerModel->hasOne(
             $this->related,

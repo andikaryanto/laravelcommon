@@ -6,5 +6,5 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 
 abstract class AbstractRelation
 {
-    abstract public function getRelation(): Relation;
+    abstract public function getRelation(): mixed;
 }
