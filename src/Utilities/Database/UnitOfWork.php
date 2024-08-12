@@ -6,6 +6,7 @@ use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use LaravelCommon\App\Database\Eloquent\Relations\BelongsToManyRelation;
+use LaravelCommon\App\Database\Eloquent\Relations\HasManyRelation;
 use LaravelCommon\App\Models\AuthenticableBaseModel;
 use LaravelCommon\App\Models\BaseModel;
 use LaravelCommon\App\Services\IncomingRequestService;
@@ -73,6 +74,22 @@ class UnitOfWork
                         $value->doAttach();
                         $value->doDetach();
                     }
+                }
+
+                // TODO:
+                // $addedCollection->save() will fail since "parent" model is not persisted when it's associated
+                // the idea is to associate when parent mode is persisted
+                // see BelongsToRelation
+                if (
+                    $property->getType() &&
+                    $property->getType()->getName() == HasManyRelation::class
+                ) {
+                    $value = $property->getValue($model);
+                    foreach ($value->getAddedModelCollection() as $addedCollection) {
+                        $addedCollection->save();
+                    }
+
+                    $value->emptyAddedModelCollection();
                 }
             }
         } catch (Exception $e) {
