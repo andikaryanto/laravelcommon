@@ -75,8 +75,8 @@ class HasManyRelation extends AbstractRelation
     public function add(Model $model): HasManyRelation
     {
         if (empty($model->getKey())) {
-            $existCollection = $this->get();
-            $alreadyIn = $existCollection->filter(
+            // $existCollection = $this->get();
+            $alreadyIn = $this->addModelCollection->filter(
                 function ($existModel) use ($model) {
                     return spl_object_hash($existModel) == spl_object_hash($model);
                 }
@@ -145,10 +145,7 @@ class HasManyRelation extends AbstractRelation
     public function getRelation(): mixed
     {
         if (App::runningUnitTests()) {
-            // Create a mock of the BelongsToMany relationship
             $mock = Mockery::mock(BelongsToMany::class)->makePartial();
-
-            // Configure the mock to return an empty collection when the get method is called
             $mock->shouldReceive('get')->andReturn(new Collection());
 
             return $mock;

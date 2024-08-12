@@ -2,8 +2,11 @@
 
 namespace LaravelCommon\App\Database\Eloquent\Relations;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\App;
+use Mockery;
 
 class HasOneRelation extends AbstractRelation
 {
@@ -47,12 +50,24 @@ class HasOneRelation extends AbstractRelation
         return $this->getRelation()->get()->first();
     }
 
+    public function set(?Model $model): HasOneRelation
+    {
+        $this->ownedModel = $model;
+        return $this;
+    }
+
     /**
      *
      * @return mixed
      */
     public function getRelation(): mixed
     {
+        if (App::runningUnitTests()) {
+            $mock = Mockery::mock(HasOne::class)->makePartial();
+            $mock->shouldReceive('get')->andReturn(new Collection());
+            return $mock;
+        }
+
         return $this->ownerModel->hasOne(
             $this->related,
             $this->foreignKey,

@@ -6,6 +6,7 @@ use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use LaravelCommon\App\Database\Eloquent\Relations\BelongsToManyRelation;
+use LaravelCommon\App\Database\Eloquent\Relations\BelongsToRelation;
 use LaravelCommon\App\Database\Eloquent\Relations\HasManyRelation;
 use LaravelCommon\App\Models\AuthenticableBaseModel;
 use LaravelCommon\App\Models\BaseModel;
@@ -55,10 +56,10 @@ class UnitOfWork
                 $model->setUpdatedBy($this->incomingRequestService->getUser());
             }
 
-            $model->save();
-
             $reflectionClass = new ReflectionClass($model);
             $properties = $reflectionClass->getProperties(ReflectionProperty::IS_PROTECTED);
+
+            $model->save();
 
             foreach ($properties as $property) {
                 if (
@@ -86,6 +87,32 @@ class UnitOfWork
                 ) {
                     $value = $property->getValue($model);
                     foreach ($value->getAddedModelCollection() as $addedCollection) {
+
+                        $hasManyReflectionClass = new ReflectionClass($addedCollection);
+                        $hasManyProperties = $hasManyReflectionClass->getProperties(ReflectionProperty::IS_PROTECTED);
+
+                        foreach ($hasManyProperties as $hasManyProperty) {
+                            if (
+                                $hasManyProperty->getType() &&
+                                $hasManyProperty->getType()->getName() == BelongsToRelation::class
+                            ) {
+                                $belongsToRelation = $hasManyProperty->getValue($addedCollection);
+                                $belongsToRelationModel = $belongsToRelation->get();
+                                if (spl_object_hash($belongsToRelationModel) == spl_object_hash($model)) {
+                                    $belongsToRelation->getRelation()->associate($model);
+                                    // $foreignKey = $belongsToRelation->getForeignKey();
+                                    // if (empty($belongsToRelationModel->getKey())) {
+                                    //     $belongsToRelationModel->save();
+                                    //     $addedCollection->$foreignKey = $belongsToRelationModel->getKey();
+                                    // }
+
+                                    // if ($addedCollection->$foreignKey == null && !empty($belongsToRelationModel->getKey())) {
+                                    //     $addedCollection->$foreignKey = $belongsToRelationModel->getKey();
+                                    // }
+                                }
+                            }
+                        }
+
                         $addedCollection->save();
                     }
 
