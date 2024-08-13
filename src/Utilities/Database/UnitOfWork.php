@@ -83,7 +83,6 @@ class UnitOfWork
                 ) {
                     $value = $property->getValue($model);
                     foreach ($value->getAddedModelCollection() as $addedCollection) {
-
                         $hasManyReflectionClass = new ReflectionClass($addedCollection);
                         $hasManyProperties = $hasManyReflectionClass->getProperties(ReflectionProperty::IS_PROTECTED);
 

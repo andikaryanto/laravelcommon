@@ -236,7 +236,7 @@ class HydratorMiddleware
 
             if (!is_null($relatedObject)) {
                 $model->$modelSetterFunction($relatedObject);
-            } else if ($relationNullable) {                
+            } elseif ($relationNullable) {
                 $model->$modelSetterFunction(null);
             }
         }
