@@ -73,18 +73,6 @@ class BelongsToRelation extends AbstractRelation
         return $this;
     }
 
-    protected function getDynamicRelationName(): string
-    {
-        // Generate a camelCase relation name based on the class name
-        $className = class_basename($this->related);
-        return Str::camel($className);
-    }
-
-    public function getForeignKey()
-    {
-        return $this->foreignKey;
-    }
-
     /**
      *
      * @return mixed
