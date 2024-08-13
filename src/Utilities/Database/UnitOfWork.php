@@ -77,10 +77,6 @@ class UnitOfWork
                     }
                 }
 
-                // TODO:
-                // $addedCollection->save() will fail since "parent" model is not persisted when it's associated
-                // the idea is to associate when parent mode is persisted
-                // see BelongsToRelation
                 if (
                     $property->getType() &&
                     $property->getType()->getName() == HasManyRelation::class
@@ -100,15 +96,6 @@ class UnitOfWork
                                 $belongsToRelationModel = $belongsToRelation->get();
                                 if (spl_object_hash($belongsToRelationModel) == spl_object_hash($model)) {
                                     $belongsToRelation->getRelation()->associate($model);
-                                    // $foreignKey = $belongsToRelation->getForeignKey();
-                                    // if (empty($belongsToRelationModel->getKey())) {
-                                    //     $belongsToRelationModel->save();
-                                    //     $addedCollection->$foreignKey = $belongsToRelationModel->getKey();
-                                    // }
-
-                                    // if ($addedCollection->$foreignKey == null && !empty($belongsToRelationModel->getKey())) {
-                                    //     $addedCollection->$foreignKey = $belongsToRelationModel->getKey();
-                                    // }
                                 }
                             }
                         }
