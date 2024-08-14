@@ -62,7 +62,7 @@ class HasOneRelation extends AbstractRelation
      */
     public function getRelation(): mixed
     {
-        if (App::runningUnitTests()) {
+        if ($this->isUnitTest()) {
             $mock = Mockery::mock(HasOne::class)->makePartial();
             $mock->shouldReceive('get')->andReturn(new Collection());
             return $mock;

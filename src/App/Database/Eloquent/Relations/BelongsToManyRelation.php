@@ -212,7 +212,7 @@ class BelongsToManyRelation extends AbstractRelation implements IteratorAggregat
      */
     public function getRelation(): mixed
     {
-        if (App::runningUnitTests()) {
+        if ($this->isUnitTest()) {
             // Create a mock of the BelongsToMany relationship
             $mock = Mockery::mock(BelongsToMany::class)->makePartial();
 

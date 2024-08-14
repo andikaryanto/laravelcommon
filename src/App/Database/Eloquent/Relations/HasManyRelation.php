@@ -144,7 +144,7 @@ class HasManyRelation extends AbstractRelation
      */
     public function getRelation(): mixed
     {
-        if (App::runningUnitTests()) {
+        if ($this->isUnitTest()) {
             $mock = Mockery::mock(BelongsToMany::class)->makePartial();
             $mock->shouldReceive('get')->andReturn(new Collection());
 
