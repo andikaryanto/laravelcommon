@@ -14,7 +14,7 @@ class HasManyRelation extends AbstractRelation
 {
     protected Model $ownerModel;
     protected Collection $addModelCollection;
-    protected Collection $removeModelCollection;
+    protected Collection $removedModelCollection;
     protected string $related;
     protected ?string $foreignKey = null;
     protected ?string $localkey = null;
@@ -34,7 +34,7 @@ class HasManyRelation extends AbstractRelation
         ?string $localkey = null
     ) {
         $this->addModelCollection = new Collection();
-        $this->removeModelCollection = new Collection();
+        $this->removedModelCollection = new Collection();
         $this->ownerModel = $ownerModel;
         $this->related = $related;
         $this->foreignKey = $foreignKey;
@@ -48,6 +48,9 @@ class HasManyRelation extends AbstractRelation
      */
     public function get(): ?Collection
     {
+        /**
+         * @var Collection $all
+         */
         $all = $this->getRelation()->get();
         // $this->addModelCollection will be emptied using emptyAddedModelCollection when data is persisted
         // so when it's not persisted the idea is to get the persisted relation and added collection.
@@ -58,6 +61,8 @@ class HasManyRelation extends AbstractRelation
             $all->add($addedModel);
         }
 
+        $all = $all->diff($this->removedModelCollection);
+
         return $all;
     }
 
@@ -66,9 +71,20 @@ class HasManyRelation extends AbstractRelation
         return $this->addModelCollection;
     }
 
+    public function getRemovedModelCollection(): Collection
+    {
+        return $this->removedModelCollection;
+    }
+
     public function emptyAddedModelCollection(): HasManyRelation
     {
         $this->addModelCollection = new Collection();
+        return $this;
+    }
+
+    public function emptyRemovedModelCollection(): HasManyRelation
+    {
+        $this->removedModelCollection = new Collection();
         return $this;
     }
 
@@ -105,38 +121,30 @@ class HasManyRelation extends AbstractRelation
         return $this;
     }
 
-    // /**
-    //  * Remove model from collection
-    //  *
-    //  * @param Model $model
-    //  * @return BelongsToManyRelation
-    //  */
-    // public function remove(Model $model): HasManyRelation
-    // {
-    //     if (empty($model->getKey())) {
-    //         $class = get_class($model);
-    //         throw new Exception("Cannot add non-persisted $class model");
-    //     } else {
-    //         $existCollection = $this->get();
-    //         // $existCollection->()
-    //         // $inAddedFound = $existCollection->filter(
-    //         //     function ($addModel) use ($model) {
-    //         //         return spl_object_hash($addModel) == spl_object_hash($model);
-    //         //     }
-    //         // )->count() > 0;
-
-    //         // if ($inAddedFound) {
-    //         //     $this->addModelCollection = $this->addModelCollection->filter(
-    //         //         function ($addModel) use ($model) {
-    //         //             return $addModel->getKey() != $model->getKey();
-    //         //         }
-    //         //     );
-    //         // } else {
-    //         //     $this->removeModelCollection->add($model);
-    //         // }
-    //     }
-    //     return $this;
-    // }
+    /**
+     * Remove model from collection
+     *
+     * @param Model $model
+     * @return BelongsToManyRelation
+     */
+    public function remove(Model $model): HasManyRelation
+    {
+        if (empty($model->getKey())) {
+            $this->addModelCollection = $this->addModelCollection->filter(
+                function ($existModel) use ($model) {
+                    return spl_object_hash($existModel) != spl_object_hash($model);
+                }
+            );
+        } else {
+            $existCollection = $this->get();
+            $this->removedModelCollection = $existCollection->filter(
+                function ($existModel) use ($model) {
+                    return $existModel->isEqualTo($model);
+                }
+            );
+        }
+        return $this;
+    }
 
     /**
      *
