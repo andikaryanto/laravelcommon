@@ -93,6 +93,11 @@ class BaseResponse extends HttpResponse implements ResponseInterface
         return $this->message;
     }
 
+    public function setMessage(string $message)
+    {
+        $this->message = $message;
+    }
+
     public function getCode(): int
     {
         return $this->code;

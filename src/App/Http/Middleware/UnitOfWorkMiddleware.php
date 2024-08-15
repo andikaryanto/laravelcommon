@@ -51,7 +51,13 @@ class UnitOfWorkMiddleware
                 }
             }
         } catch (Exception $e) {
-            throw new ResponsableException($e->getMessage(), new BadRequestResponse($e->getMessage(), ResponseConst::DATA_EXIST));
+            if($e instanceof ResponsableException) {
+                $response = $e->getResponse();
+                $response->setMessage('Data dengan kriteria tersebut sudah ada');
+                return $response;
+            }
+
+            throw $e;
         }
 
         return $response;
