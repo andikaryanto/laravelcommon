@@ -115,7 +115,7 @@ class Query extends Builder
     {
         if (!empty($this->joins)) {
             $newBuilder = new static($this->connection, $this->grammar, $this->getProcessor());
-            
+
             $tableAndId = $this->table . '.' . $this->model->getKeyName();
             $ids = $this->distinct()->pluck($tableAndId)->toArray();
             $this->total = count($ids);
@@ -129,7 +129,7 @@ class Query extends Builder
                 ->distinct()
                 ->whereIdIn($lastSizedIds);
 
-            if($this->orders && count($lastSizedIds) > 0) {
+            if ($this->orders && count($lastSizedIds) > 0) {
                 // using WHEN Statement to order the data to suppor sqlite
                 foreach ($lastSizedIds as $index => $id) {
                     $orderByCases[] = "WHEN id = $id THEN $index";
@@ -209,12 +209,12 @@ class Query extends Builder
     }
 
     /**
-     * Be Aware, this is for get url only, 
+     * Be Aware, this is for get url only,
      * the value of current page, next page, prev page might not be relevant
-     * 
+     *
      * when we are paginate the data
      * this awarepaginator will always contains 1 page only with the size of it paging size.
-     * 
+     *
      * @return LengthAwarePaginator|null
      */
     public function getAwarePaginator(): ?LengthAwarePaginator

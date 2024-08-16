@@ -8,7 +8,6 @@ use LaravelCommon\App\Consts\ResponseConst;
 use LaravelCommon\Exceptions\ResponsableException;
 use LaravelCommon\Responses\BadRequestResponse;
 use LaravelCommon\Responses\BaseResponse;
-use LaravelCommon\Responses\ResourceCreatedResponse;
 use LaravelCommon\System\Http\Request;
 use LaravelCommon\Utilities\Database\UnitOfWork as DatabaseUnitOfWork;
 
@@ -51,9 +50,8 @@ class UnitOfWorkMiddleware
                 }
             }
         } catch (Exception $e) {
-            if($e instanceof ResponsableException) {
+            if ($e instanceof ResponsableException) {
                 $response = $e->getResponse();
-                $response->setMessage('Data dengan kriteria tersebut sudah ada');
                 return $response;
             }
 

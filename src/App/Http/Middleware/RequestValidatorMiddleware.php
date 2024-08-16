@@ -19,16 +19,36 @@ class RequestValidatorMiddleware
      * @param  string|null  ...$guards
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
-    public function handle(Request $request, Closure $next, $rule)
+    public function handle(Request $request, Closure $next, ...$methods)
     {
-        $rules = $this->$rule();
-        $validator = Validator::make($request->all(), $rules);
+        $method = $methods[0];
+        $rules = $this->$method();
+
+
+        $messageValue = [];
+        if (count($methods) == 2) {
+            $messageMethod = $methods[1];
+            $messageValue = $this->$messageMethod();
+        }
+
+        $validator = Validator::make($request->all(), $rules, $messageValue);
 
         if ($validator->fails()) {
-            $message = 'invalid request data';
+            $message = null;
 
             foreach ($validator->errors()->getMessages() as $key => $messageData) {
-                $message = $messageData[0];
+                if (is_array($messageData[0])) {
+                    foreach ($messageData[0] as $messageValue) {
+                        $message = $messageValue;
+                        break;
+                    }
+                } else {
+                    $message = $messageData[0];
+                }
+
+                if (!is_null($message)) {
+                    break;
+                }
             }
 
             return new JsonResponse(
