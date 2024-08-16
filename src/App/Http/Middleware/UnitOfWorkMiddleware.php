@@ -4,7 +4,6 @@ namespace LaravelCommon\App\Http\Middleware;
 
 use Closure;
 use Exception;
-use Illuminate\Database\QueryException;
 use LaravelCommon\App\Consts\ResponseConst;
 use LaravelCommon\Exceptions\ResponsableException;
 use LaravelCommon\Responses\BadRequestResponse;
@@ -68,7 +67,7 @@ class UnitOfWorkMiddleware
             $resource = $request->getResource();
             $this->unitOfWork->persist($resource);
             $this->unitOfWork->flush();
-        } catch (QueryException $e) {
+        } catch (Exception $e) {
             throw new ResponsableException($e->getMessage(), new BadRequestResponse($e->getMessage(), ResponseConst::DATA_EXIST));
         }
     }
