@@ -4,11 +4,11 @@ namespace LaravelCommon\App\Http\Middleware;
 
 use Closure;
 use Exception;
+use Illuminate\Database\QueryException;
 use LaravelCommon\App\Consts\ResponseConst;
 use LaravelCommon\Exceptions\ResponsableException;
 use LaravelCommon\Responses\BadRequestResponse;
 use LaravelCommon\Responses\BaseResponse;
-use LaravelCommon\Responses\ResourceCreatedResponse;
 use LaravelCommon\System\Http\Request;
 use LaravelCommon\Utilities\Database\UnitOfWork as DatabaseUnitOfWork;
 
@@ -51,9 +51,8 @@ class UnitOfWorkMiddleware
                 }
             }
         } catch (Exception $e) {
-            if($e instanceof ResponsableException) {
+            if ($e instanceof ResponsableException) {
                 $response = $e->getResponse();
-                $response->setMessage('Data dengan kriteria tersebut sudah ada');
                 return $response;
             }
 
@@ -69,7 +68,7 @@ class UnitOfWorkMiddleware
             $resource = $request->getResource();
             $this->unitOfWork->persist($resource);
             $this->unitOfWork->flush();
-        } catch (Exception $e) {
+        } catch (QueryException $e) {
             throw new ResponsableException($e->getMessage(), new BadRequestResponse($e->getMessage(), ResponseConst::DATA_EXIST));
         }
     }

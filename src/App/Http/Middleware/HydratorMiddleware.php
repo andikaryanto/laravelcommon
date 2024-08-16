@@ -217,32 +217,36 @@ class HydratorMiddleware
             return $this;
         }
 
-        if (isset($input[$field]) && !empty($relatedObjectGetter)) {
-            $id = $keyArr[1];
-            $relatedValue = $input[$field][$id];
+        if (key_exists($field, $input)) {
+            if (!empty($relatedObjectGetter)) {
+                $id = $keyArr[1];
+                $relatedValue = $input[$field][$id];
 
-            $relatedRepository = $relatedObjectGetter[0];
-            $relatedFunction = $relatedObjectGetter[1];
-            $relatedObject = $relatedRepository->$relatedFunction($relatedValue);
+                $relatedRepository = $relatedObjectGetter[0];
+                $relatedFunction = $relatedObjectGetter[1];
+                $relatedObject = $relatedRepository->$relatedFunction($relatedValue);
 
-            $relationNullable = false;
-            if (isset($relatedObjectGetter[2])) {
-                $relationNullable = $relatedObjectGetter[2];
+                $relationNullable = false;
+                if (isset($relatedObjectGetter[2])) {
+                    $relationNullable = $relatedObjectGetter[2];
+                }
+
+                if (is_null($relatedObject) && !$relationNullable) {
+                    throw new ModelException($field . ' with ID ' . $relatedValue . ' not found');
+                }
+
+                if (!is_null($relatedObject)) {
+                    $model->$modelSetterFunction($relatedObject);
+                } elseif ($relationNullable) {
+                    $model->$modelSetterFunction(null);
+                }
+            } else {
+                if (!empty($input[$field])) {
+                    $model->$modelSetterFunction($input[$field]);
+                } else {
+                    $model->$modelSetterFunction(null);
+                }
             }
-
-            if (is_null($relatedObject) && !$relationNullable) {
-                throw new ModelException($field . ' with ID ' . $relatedValue . ' not found');
-            }
-
-            if (!is_null($relatedObject)) {
-                $model->$modelSetterFunction($relatedObject);
-            } else if ($relationNullable) {                
-                $model->$modelSetterFunction(null);
-            }
-        }
-
-        if (isset($input[$field]) && empty($relatedObjectGetter)) {
-            $model->$modelSetterFunction($input[$field]);
         }
 
         return $this;
