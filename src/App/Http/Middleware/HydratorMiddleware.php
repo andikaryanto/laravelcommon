@@ -241,7 +241,7 @@ class HydratorMiddleware
                     $model->$modelSetterFunction(null);
                 }
             } else {
-                if (!empty($input[$field])) {
+                if (!is_null($input[$field])) {
                     $model->$modelSetterFunction($input[$field]);
                 } else {
                     $model->$modelSetterFunction(null);
