@@ -102,7 +102,7 @@ class UnitOfWork
                         $addedCollection->save();
                     }
 
-                    foreach ($value->emptyRemovedModelCollection() as $removedModel) {
+                    foreach ($value->getRemovedModelCollection() as $removedModel) {
                         $this->remove($removedModel);
                     }
 
