@@ -8,7 +8,6 @@ use LaravelCommon\App\Consts\ResponseConst;
 use LaravelCommon\Exceptions\ResponsableException;
 use LaravelCommon\Responses\BadRequestResponse;
 use LaravelCommon\Responses\BaseResponse;
-use LaravelCommon\Responses\ResourceCreatedResponse;
 use LaravelCommon\System\Http\Request;
 use LaravelCommon\Utilities\Database\UnitOfWork as DatabaseUnitOfWork;
 
@@ -51,7 +50,12 @@ class UnitOfWorkMiddleware
                 }
             }
         } catch (Exception $e) {
-            throw new ResponsableException($e->getMessage(), new BadRequestResponse($e->getMessage(), ResponseConst::DATA_EXIST));
+            if ($e instanceof ResponsableException) {
+                $response = $e->getResponse();
+                return $response;
+            }
+
+            throw $e;
         }
 
         return $response;
