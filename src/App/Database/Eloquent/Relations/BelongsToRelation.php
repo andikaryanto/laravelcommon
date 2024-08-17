@@ -4,8 +4,6 @@ namespace LaravelCommon\App\Database\Eloquent\Relations;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Str;
 use Mockery;
 
 class BelongsToRelation extends AbstractRelation
@@ -71,18 +69,6 @@ class BelongsToRelation extends AbstractRelation
             }
         }
         return $this;
-    }
-
-    protected function getDynamicRelationName(): string
-    {
-        // Generate a camelCase relation name based on the class name
-        $className = class_basename($this->related);
-        return Str::camel($className);
-    }
-
-    public function getForeignKey()
-    {
-        return $this->foreignKey;
     }
 
     /**
