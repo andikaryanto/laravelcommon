@@ -13,7 +13,8 @@ use Mockery;
 class HasManyRelation extends AbstractRelation
 {
     protected Model $ownerModel;
-    protected Collection $addedModelCollection;
+    protected Collection $testCollection;
+    protected Collection $addModelCollection;
     protected Collection $removedModelCollection;
     protected string $related;
     protected ?string $foreignKey = null;
@@ -33,8 +34,9 @@ class HasManyRelation extends AbstractRelation
         ?string $foreignKey = null,
         ?string $localkey = null
     ) {
-        $this->addedModelCollection = new Collection();
+        $this->addModelCollection = new Collection();
         $this->removedModelCollection = new Collection();
+        $this->testCollection = new Collection();
         $this->ownerModel = $ownerModel;
         $this->related = $related;
         $this->foreignKey = $foreignKey;
@@ -52,23 +54,25 @@ class HasManyRelation extends AbstractRelation
          * @var Collection $all
          */
         $all = $this->getRelation()->get();
-        // $this->addedModelCollection will be emptied using emptyAddedModelCollection when data is persisted
+        // $this->addModelCollection will be emptied using emptyAddedModelCollection when data is persisted
         // so when it's not persisted the idea is to get the persisted relation and added collection.
-        // when data persisted means $this->addedModelCollection is in database then $this->getRelation()->get()
-        // get them from database so that's why $this->addedModelCollection should be emptied when  $ownerModel is persisted
+        // when data persisted means $this->addModelCollection is in database then $this->getRelation()->get()
+        // get them from database so that's why $this->addModelCollection should be emptied when  $ownerModel is persisted
         // this is not done yet, see UnitOfWork class at HasManyRelation section
-        foreach ($this->addedModelCollection as $addedModel) {
-            $all->add($addedModel);
-        }
-
-        $all = $all->diff($this->removedModelCollection);
+        // foreach ($this->addModelCollection as $addedModel) {
+        //     $all->add($addedModel);
+        // }
 
         return $all;
+    }
+    public function getTestCollection(): Collection
+    {
+        return $this->testCollection;
     }
 
     public function getAddedModelCollection(): Collection
     {
-        return $this->addedModelCollection;
+        return $this->addModelCollection;
     }
 
     public function getRemovedModelCollection(): Collection
@@ -78,7 +82,7 @@ class HasManyRelation extends AbstractRelation
 
     public function emptyAddedModelCollection(): HasManyRelation
     {
-        $this->addedModelCollection = new Collection();
+        $this->addModelCollection = new Collection();
         return $this;
     }
 
@@ -91,21 +95,28 @@ class HasManyRelation extends AbstractRelation
     public function add(Model $model): HasManyRelation
     {
         if (empty($model->getKey())) {
-            // $existCollection = $this->get();
-            $alreadyIn = $this->addedModelCollection->filter(
+            $this->removedModelCollection = $this->removedModelCollection->filter(
+                function ($existModel) use ($model) {
+                    return spl_object_hash($existModel) != spl_object_hash($model);
+                }
+            );
+
+            $alreadyIn = $this->addModelCollection->filter(
                 function ($existModel) use ($model) {
                     return spl_object_hash($existModel) == spl_object_hash($model);
                 }
             )->count() > 0;
 
             if (!$alreadyIn) {
-                $this->addedModelCollection->add($model);
+                $this->addModelCollection->add($model);
             }
         } else {
-            // if the model already persisted in database means it already has ID.
-            // $this->get() will get it from database
-            // the only reason we set up here is when we need to "mock"
-            // for unit test because we dont involve database to test.
+            $this->removedModelCollection = $this->removedModelCollection->filter(
+                function ($existModel) use ($model) {
+                    return !$existModel->isEqualTo($model);
+                }
+            );
+
             $existCollection = $this->get();
             $alreadyIn = $existCollection->filter(
                 function ($existModel) use ($model) {
@@ -113,8 +124,14 @@ class HasManyRelation extends AbstractRelation
                 }
             )->count() > 0;
 
-            if (!$alreadyIn) {
-                $this->addedModelCollection->add($model);
+            $alreadyInAddedCollection = $this->addModelCollection->filter(
+                function ($existModel) use ($model) {
+                    return $existModel->isEqualTo($model);
+                }
+            )->count() > 0;
+
+            if (!$alreadyIn && !$alreadyInAddedCollection) {
+                $this->addModelCollection->add($model);
             }
         }
 
@@ -125,23 +142,39 @@ class HasManyRelation extends AbstractRelation
      * Remove model from collection
      *
      * @param Model $model
-     * @return BelongsToManyRelation
+     * @return HasManyRelation
      */
     public function remove(Model $model): HasManyRelation
     {
         if (empty($model->getKey())) {
-            $this->addedModelCollection = $this->addedModelCollection->filter(
+            $this->addModelCollection = $this->addModelCollection->filter(
                 function ($existModel) use ($model) {
                     return spl_object_hash($existModel) != spl_object_hash($model);
                 }
             );
         } else {
+            $this->addModelCollection = $this->addModelCollection->filter(
+                function ($existModel) use ($model) {
+                    return !$existModel->isEqualTo($model);
+                }
+            );
+
             $existCollection = $this->get();
-            $this->removedModelCollection = $existCollection->filter(
+            $isExistInDatabase = $existCollection->filter(
                 function ($existModel) use ($model) {
                     return $existModel->isEqualTo($model);
                 }
-            );
+            )->count() > 0;
+
+            $alreayInRemove = $this->removedModelCollection->filter(
+                function ($existModel) use ($model) {
+                    return $existModel->isEqualTo($model);
+                }
+            )->count() > 0;
+
+            if ($isExistInDatabase & !$alreayInRemove) {
+                $this->removedModelCollection->add($model);
+            }
         }
         return $this;
     }
@@ -154,7 +187,7 @@ class HasManyRelation extends AbstractRelation
     {
         if ($this->isUnitTest()) {
             $mock = Mockery::mock(BelongsToMany::class)->makePartial();
-            $mock->shouldReceive('get')->andReturn(new Collection());
+            $mock->shouldReceive('get')->andReturn($this->testCollection);
 
             return $mock;
         }
