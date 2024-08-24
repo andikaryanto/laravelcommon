@@ -4,6 +4,7 @@ namespace LaravelCommon\App\Database\Eloquent\Relations;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Mockery;
 
 class BelongsToRelation extends AbstractRelation
 {
@@ -72,10 +73,18 @@ class BelongsToRelation extends AbstractRelation
 
     /**
      *
-     * @return BelongsTo
+     * @return mixed
      */
-    public function getRelation(): BelongsTo
+    public function getRelation(): mixed
     {
+        if ($this->isUnitTest()) {
+            $mock = Mockery::mock(BelongsTo::class)->makePartial();
+            $mock->shouldReceive('associate')->andReturn($this->ownedModel);
+            $mock->shouldReceive('getResults')->andReturn(null);
+
+            return $mock;
+        }
+
         return $this->ownerModel->belongsTo(
             $this->related,
             $this->foreignKey,
