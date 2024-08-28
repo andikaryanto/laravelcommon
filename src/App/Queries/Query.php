@@ -159,6 +159,11 @@ class Query extends Builder
         return $this;
     }
 
+    public function groupByContextFields()
+    {
+        return $this->groupBy($this->getSelectColumns());
+    }
+
     /**
      * Reset Query
      *
