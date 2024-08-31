@@ -12,11 +12,13 @@ abstract class PaggedCollection extends AbstractCollection
     protected ?int $size = null;
     protected ?int $totalRecord = null;
     protected bool $disableKeywordSearch;
+    protected bool $disableDefaultOrder;
 
-    public function __construct(Query $query, ?Request $request = null, bool $disableKeywordSearch = false)
+    public function __construct(Query $query, ?Request $request = null, bool $disableKeywordSearch = false, bool $disableDefaultOrder = false)
     {
         parent::__construct($query, $request);
         $this->disableKeywordSearch = $disableKeywordSearch;
+        $this->disableDefaultOrder = $disableDefaultOrder;
     }
 
 
@@ -34,20 +36,21 @@ abstract class PaggedCollection extends AbstractCollection
         $size = config("common-config")['collection_paging']['size'];
         $page = 1;
 
+        if (!$this->disableDefaultOrder) {
+            if (isset($request->order_direction)) {
+                $sortDirection = strtolower($request->order_direction);
+            }
 
-        if (isset($request->order_direction)) {
-            $sortDirection = strtolower($request->order_direction);
-        }
+            if (isset($request->order_by)) {
+                $sortColumn = $request->order_by;
+            }
 
-        if (isset($request->order_by)) {
-            $sortColumn = $request->order_by;
-        }
-
-        if (!is_null($sortColumn)) {
-            if (str_contains($sortColumn, '.')) {
-                $this->query->orderBy($sortColumn, $sortDirection);
-            } else {
-                $this->query->orderBy($table . '.' . $sortColumn, $sortDirection);
+            if (!is_null($sortColumn)) {
+                if (str_contains($sortColumn, '.')) {
+                    $this->query->orderBy($sortColumn, $sortDirection);
+                } else {
+                    $this->query->orderBy($table . '.' . $sortColumn, $sortDirection);
+                }
             }
         }
 

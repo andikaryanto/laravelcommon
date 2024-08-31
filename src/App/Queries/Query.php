@@ -16,7 +16,13 @@ class Query extends Builder
 {
     protected $model;
     protected string $table;
+    protected array $addedSelect = [];
     protected ?LengthAwarePaginator $lengthAwarePaginator = null;
+    protected ?int $page = null;
+    protected ?int $size = null;
+    protected ?int $total = 0;
+    protected bool $isHaveCount = false;
+
 
     // NOTE: we used to do have issue on grammar on laravel 9.xx
     // when use DB::connection()->query()->getGrammar() the grammar is always incorrect while querying the database
@@ -34,10 +40,6 @@ class Query extends Builder
     //     $this->table = $model->getTable();
     //     $this->fromSelect();
     // }
-
-    protected ?int $page = null;
-    protected ?int $size = null;
-    protected ?int $total = 0;
 
     /**
      * Create a new query builder instance.
@@ -59,6 +61,12 @@ class Query extends Builder
         $this->fromSelect();
     }
 
+    public function setIsHaveCount(bool $isHaveCount)
+    {
+        $this->isHaveCount = $isHaveCount;
+        return $this;
+    }
+
     protected function getSelectColumns()
     {
         $columns = Schema::getColumnListing($this->model->getTable());
@@ -68,6 +76,12 @@ class Query extends Builder
         }
 
         return $columnsWithAlias;
+    }
+
+    public function addSelect($column)
+    {
+        $this->addedSelect[] = $column;
+        return parent::addSelect($column);
     }
 
     /**
@@ -89,7 +103,6 @@ class Query extends Builder
 
         $identityClass = get_class($this->model);
         $collection = $identityClass::hydrate($models);
-
         return $collection;
     }
 
@@ -114,41 +127,92 @@ class Query extends Builder
     public function onModelContext()
     {
         if (!empty($this->joins)) {
-            $newBuilder = new static($this->connection, $this->grammar, $this->getProcessor());
+            if ($this->isHaveCount) {
+                $newBuilder = new static($this->connection, $this->grammar, $this->getProcessor());
 
-            $tableAndId = $this->table . '.' . $this->model->getKeyName();
-            $ids = $this->distinct()->pluck($tableAndId)->toArray();
-            $this->total = count($ids);
+                $tableAndId = $this->table . '.' . $this->model->getKeyName();
+                $ids = $this->distinct()->pluck($tableAndId)->toArray();
+                $this->total = count($ids);
 
-            $lastSizedIds = $ids;
-            if (!empty($this->page) && !empty($this->size) && count($ids) > 0) {
-                $lastSizedIds = array_slice($ids, $this->size * ($this->page - 1), $this->size);
-            }
-
-            $newBuilder->fromSelect()
-                ->distinct()
-                ->whereIdIn($lastSizedIds);
-
-            if ($this->orders && count($lastSizedIds) > 0) {
-                // using WHEN Statement to order the data to suppor sqlite
-                foreach ($lastSizedIds as $index => $id) {
-                    $orderByCases[] = "WHEN id = $id THEN $index";
+                $lastSizedIds = $ids;
+                if (!empty($this->page) && !empty($this->size) && count($ids) > 0) {
+                    $lastSizedIds = array_slice($ids, $this->size * ($this->page - 1), $this->size);
                 }
 
-                $orderByCaseSql = 'CASE ' . implode(' ', $orderByCases) . ' END';
-                $newBuilder->orderByRaw($orderByCaseSql);
+                $newBuilder->fromSelect();
 
-                // TODO: SQLITE did not support this, we might need consider other way
-                // $newBuilder->orderByRaw('FIELD(' . $tableAndId . ', ' . implode(',', $lastSizedIds) . ')');
+                if ($this->groups) {
+                    // only do join and addselect when have group
+                    // so we are keeping the record clean
+                    $newBuilder->addSelect($this->addedSelect);
+                    $newBuilder->joins = $this->joins;
+                    foreach ($this->wheres as $where) {
+                        $newBuilder->wheres[] = $where;
+                        $newBuilder->bindings['where'] = $this->bindings['where'];
+                    }
+                    $newBuilder->groups = $this->groups;
+                }
+
+                $newBuilder->whereIdIn($lastSizedIds);
+
+                if ($this->orders && count($lastSizedIds) > 0) {
+                    // using WHEN Statement to order the data to suppor sqlite
+                    foreach ($lastSizedIds as $index => $id) {
+                        $table = $this->getTable();
+                        $orderByCases[] = "WHEN $table.id = $id THEN $index";
+                    }
+
+                    $orderByCaseSql = 'CASE ' . implode(' ', $orderByCases) . ' END';
+                    $newBuilder->orderByRaw($orderByCaseSql);
+
+                    // TODO: SQLITE did not support this, we might need consider other way
+                    // $newBuilder->orderByRaw('FIELD(' . $tableAndId . ', ' . implode(',', $lastSizedIds) . ')');
+                }
+
+                if (!empty($this->page) && !empty($this->size)) {
+                    $newBuilder->paging(1, $this->size, $this->getSelectColumns());
+                }
+
+                $this->lengthAwarePaginator = $newBuilder->lengthAwarePaginator;
+
+                return $newBuilder;
+            } else {
+                $newBuilder = new static($this->connection, $this->grammar, $this->getProcessor());
+
+                $tableAndId = $this->table . '.' . $this->model->getKeyName();
+                $ids = $this->distinct()->pluck($tableAndId)->toArray();
+                $this->total = count($ids);
+
+                $lastSizedIds = $ids;
+                if (!empty($this->page) && !empty($this->size) && count($ids) > 0) {
+                    $lastSizedIds = array_slice($ids, $this->size * ($this->page - 1), $this->size);
+                }
+
+                $newBuilder->fromSelect()
+                    ->distinct()
+                    ->whereIdIn($lastSizedIds);
+
+                if ($this->orders && count($lastSizedIds) > 0) {
+                    // using WHEN Statement to order the data to suppor sqlite
+                    foreach ($lastSizedIds as $index => $id) {
+                        $orderByCases[] = "WHEN id = $id THEN $index";
+                    }
+
+                    $orderByCaseSql = 'CASE ' . implode(' ', $orderByCases) . ' END';
+                    $newBuilder->orderByRaw($orderByCaseSql);
+
+                    // TODO: SQLITE did not support this, we might need consider other way
+                    // $newBuilder->orderByRaw('FIELD(' . $tableAndId . ', ' . implode(',', $lastSizedIds) . ')');
+                }
+
+                if (!empty($this->page) && !empty($this->size)) {
+                    $newBuilder->paging(1, $this->size, $this->getSelectColumns());
+                }
+
+                $this->lengthAwarePaginator = $newBuilder->lengthAwarePaginator;
+
+                return $newBuilder;
             }
-
-            if (!empty($this->page) && !empty($this->size)) {
-                $newBuilder->paging(1, $this->size, $this->getSelectColumns());
-            }
-
-            $this->lengthAwarePaginator = $newBuilder->lengthAwarePaginator;
-
-            return $newBuilder;
         } else {
             if (!empty($this->page) && !empty($this->size)) {
                 $this->paging($this->page, $this->size, $this->getSelectColumns());
@@ -157,6 +221,11 @@ class Query extends Builder
         }
 
         return $this;
+    }
+
+    public function groupByContextFields()
+    {
+        return $this->groupBy($this->getSelectColumns());
     }
 
     /**
