@@ -59,9 +59,10 @@ class HasManyRelation extends AbstractRelation
         // when data persisted means $this->addModelCollection is in database then $this->getRelation()->get()
         // get them from database so that's why $this->addModelCollection should be emptied when  $ownerModel is persisted
         // this is not done yet, see UnitOfWork class at HasManyRelation section
-        // foreach ($this->addModelCollection as $addedModel) {
-        //     $all->add($addedModel);
-        // }
+        foreach ($this->addModelCollection as $addedModel) {
+            $all->add($addedModel);
+        }
+
 
         return $all;
     }
@@ -117,7 +118,7 @@ class HasManyRelation extends AbstractRelation
                 }
             );
 
-            $existCollection = $this->get();
+            $existCollection = $this->getRelation()->get();
             $alreadyIn = $existCollection->filter(
                 function ($existModel) use ($model) {
                     return $existModel->isEqualTo($model);
@@ -134,6 +135,7 @@ class HasManyRelation extends AbstractRelation
                 $this->addModelCollection->add($model);
             }
         }
+
 
         return $this;
     }

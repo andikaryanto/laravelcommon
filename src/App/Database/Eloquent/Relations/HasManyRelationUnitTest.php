@@ -81,7 +81,19 @@ class HasManyRelationUnitTest extends UnitTest
                         $result = $this->hasManyRelation->add($this->itemStock);
                         verify($result->getAddedModelCollection()->count())->equals(1);
                     });
+
+                    $this->describe('when add model more than 1', function () {
+                        verify($this->hasManyRelation->get()->count())->equals(0);
+                        $itemStock2 = (new ItemStock())
+                            ->setId(2);
+                        $this->itemStock->setId(1);
+                        
+                        $result = $this->hasManyRelation->add($this->itemStock);
+                        $result = $this->hasManyRelation->add($itemStock2);
+                        verify($result->get()->count())->equals(2);
+                    });
                 });
+
                 $this->describe('when existing already has 1 data', function () {
                     $this->describe('when add model is already related from database', function () {
                         $this->it('should not add the same object with same ID', function () {
@@ -103,7 +115,7 @@ class HasManyRelationUnitTest extends UnitTest
                             $newItemStock->setId(2);
                             $result = $this->hasManyRelation->add($newItemStock);
                             verify($result->getAddedModelCollection()->count())->equals(1);
-                            verify($this->hasManyRelation->get()->count())->equals(1);
+                            verify($this->hasManyRelation->get()->count())->equals(2);
                         });
                     });
                 });
