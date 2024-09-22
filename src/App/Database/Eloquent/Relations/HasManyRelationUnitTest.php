@@ -87,7 +87,7 @@ class HasManyRelationUnitTest extends UnitTest
                         $itemStock2 = (new ItemStock())
                             ->setId(2);
                         $this->itemStock->setId(1);
-                        
+
                         $result = $this->hasManyRelation->add($this->itemStock);
                         $result = $this->hasManyRelation->add($itemStock2);
                         verify($result->get()->count())->equals(2);

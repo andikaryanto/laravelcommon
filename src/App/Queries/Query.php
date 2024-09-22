@@ -223,7 +223,7 @@ class Query extends Builder
                     $this->paging($this->page, $this->size, $this->getSelectColumns());
                     $this->total = $this->lengthAwarePaginator->total();
                 }
-            } else {                
+            } else {
                 $this->total = $this->count();
                 if (!empty($this->page) && !empty($this->size)) {
                     $offset = ($this->page - 1) * $this->size;
@@ -233,13 +233,13 @@ class Query extends Builder
 
                     $dataQuery = $this->get();
                     $paginator = new LengthAwarePaginator(
-                        $dataQuery,  
-                        $this->total, 
-                        $this->size,  
+                        $dataQuery,
+                        $this->total,
+                        $this->size,
                         $this->page,
                         ['path' => request()->url(), 'query' => request()->query()] // For proper pagination links
                     );
-                        
+
                     $this->lengthAwarePaginator = $paginator;
                 }
             }
