@@ -2,7 +2,6 @@
 
 namespace LaravelCommon\App\Queries;
 
-use Exception;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Query\Processors\Processor;
@@ -16,6 +15,7 @@ class Query extends Builder
 {
     protected $model;
     protected string $table;
+    protected bool $asRaw = false;
     protected array $addedSelect = [];
     protected ?LengthAwarePaginator $lengthAwarePaginator = null;
     protected ?int $page = null;
@@ -78,6 +78,12 @@ class Query extends Builder
         return $columnsWithAlias;
     }
 
+    public function setAsRaw(bool $asRaw)
+    {
+        $this->asRaw = $asRaw;
+        return $this;
+    }
+
     public function addSelect($column)
     {
         $this->addedSelect[] = $column;
@@ -92,13 +98,13 @@ class Query extends Builder
      */
     public function getIterator($columns = ['*'])
     {
-        $builder = $this->onModelContext();
+        $context = $this->onModelContext();
         $models = null;
-        $lengthAwarePaginator = $builder->lengthAwarePaginator;
+        $lengthAwarePaginator = $context->lengthAwarePaginator;
         if (!is_null($lengthAwarePaginator)) {
             $models = $lengthAwarePaginator->items();
         } else {
-            $models = $builder->get($columns)->all();
+            $models = $context->get($columns)->all();
         }
 
         $identityClass = get_class($this->model);
@@ -126,7 +132,7 @@ class Query extends Builder
 
     public function onModelContext()
     {
-        if (!empty($this->joins)) {
+        if (!empty($this->joins) && !$this->asRaw) {
             if ($this->isHaveCount) {
                 $newBuilder = new static($this->connection, $this->grammar, $this->getProcessor());
 
@@ -174,7 +180,6 @@ class Query extends Builder
                 }
 
                 $this->lengthAwarePaginator = $newBuilder->lengthAwarePaginator;
-
                 return $newBuilder;
             } else {
                 $newBuilder = new static($this->connection, $this->grammar, $this->getProcessor());
@@ -210,13 +215,33 @@ class Query extends Builder
                 }
 
                 $this->lengthAwarePaginator = $newBuilder->lengthAwarePaginator;
-
                 return $newBuilder;
             }
         } else {
-            if (!empty($this->page) && !empty($this->size)) {
-                $this->paging($this->page, $this->size, $this->getSelectColumns());
-                $this->total = $this->lengthAwarePaginator->total();
+            if (!$this->asRaw) {
+                if (!empty($this->page) && !empty($this->size)) {
+                    $this->paging($this->page, $this->size, $this->getSelectColumns());
+                    $this->total = $this->lengthAwarePaginator->total();
+                }
+            } else {                
+                $this->total = $this->count();
+                if (!empty($this->page) && !empty($this->size)) {
+                    $offset = ($this->page - 1) * $this->size;
+
+                    $this->offset($offset)
+                        ->limit($this->size);
+
+                    $dataQuery = $this->get();
+                    $paginator = new LengthAwarePaginator(
+                        $dataQuery,  
+                        $this->total, 
+                        $this->size,  
+                        $this->page,
+                        ['path' => request()->url(), 'query' => request()->query()] // For proper pagination links
+                    );
+                        
+                    $this->lengthAwarePaginator = $paginator;
+                }
             }
         }
 
