@@ -229,19 +229,19 @@ class Query extends Builder
                     $offset = ($this->page - 1) * $this->size;
 
                     $this->offset($offset)
-                        ->limit($this->size);
-                }                
+                        ->limit($this->size);               
 
-                $dataQuery = $this->get();
-                $paginator = new LengthAwarePaginator(
-                    $dataQuery,
-                    $this->total,
-                    $this->size,
-                    $this->page,
-                    ['path' => request()->url(), 'query' => request()->query()] // For proper pagination links
-                );
-
-                $this->lengthAwarePaginator = $paginator;
+                    $dataQuery = $this->get();
+                    $paginator = new LengthAwarePaginator(
+                        $dataQuery,
+                        $this->total,
+                        $this->size,
+                        $this->page,
+                        ['path' => request()->url(), 'query' => request()->query()] // For proper pagination links
+                    );
+    
+                    $this->lengthAwarePaginator = $paginator;
+                } 
             }
         }
 
