@@ -230,18 +230,18 @@ class Query extends Builder
 
                     $this->offset($offset)
                         ->limit($this->size);
+                }                
 
-                    $dataQuery = $this->get();
-                    $paginator = new LengthAwarePaginator(
-                        $dataQuery,
-                        $this->total,
-                        $this->size,
-                        $this->page,
-                        ['path' => request()->url(), 'query' => request()->query()] // For proper pagination links
-                    );
+                $dataQuery = $this->get();
+                $paginator = new LengthAwarePaginator(
+                    $dataQuery,
+                    $this->total,
+                    $this->size,
+                    $this->page,
+                    ['path' => request()->url(), 'query' => request()->query()] // For proper pagination links
+                );
 
-                    $this->lengthAwarePaginator = $paginator;
-                }
+                $this->lengthAwarePaginator = $paginator;
             }
         }
 
