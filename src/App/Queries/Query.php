@@ -91,6 +91,23 @@ class Query extends Builder
     }
 
     /**
+     * Order by column and add select with alias
+     *
+     * @param string $column column to order
+     * @param string $direction direction of order (ASC|DESC)
+     * @return $this
+     */
+    public function orderByAndAddSelect($column, $direction = 'ASC')
+    {
+        $tableColum = explode('.', $column);
+        $orderTable = $tableColum[0];
+        if ($orderTable != $this->table) {
+            $this->addSelect($column . ' as ' . implode('_', $tableColum));
+        }
+        $this->orderBy($column, $direction);
+    }
+
+    /**
      * Undocumented function
      *
      * @param array $columns
@@ -229,7 +246,7 @@ class Query extends Builder
                     $offset = ($this->page - 1) * $this->size;
 
                     $this->offset($offset)
-                        ->limit($this->size);               
+                        ->limit($this->size);
 
                     $dataQuery = $this->get();
                     $paginator = new LengthAwarePaginator(
@@ -239,9 +256,9 @@ class Query extends Builder
                         $this->page,
                         ['path' => request()->url(), 'query' => request()->query()] // For proper pagination links
                     );
-    
+
                     $this->lengthAwarePaginator = $paginator;
-                } 
+                }
             }
         }
 
