@@ -2,7 +2,7 @@
 
 namespace LaravelCommon\App\ViewModels;
 
-use App\Models\Branch;
+use LaravelCommon\App\Models\Branch;
 use LaravelCommon\ViewModels\AbstractViewModel;
 
 class BranchViewModel extends AbstractViewModel
@@ -46,7 +46,8 @@ class BranchViewModel extends AbstractViewModel
             'address' => $this->model->getAddress(),
             'phone' => $this->model->getPhone(),
             'fax' => $this->model->getFax(),
-            'email' => $this->model->getEmail()
+            'email' => $this->model->getEmail(),
+            'regency' => $this->model->getRegency()
         ];
     }
 }

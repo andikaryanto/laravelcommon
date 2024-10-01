@@ -110,4 +110,20 @@ class Branch extends BaseModel
         $this->email = $email;
         return $this;
     }
+
+    public function getRegency(): ?string
+    {
+        return $this->regency;
+    }
+
+    /**
+     *
+     * @param ?string $name
+     * @return Branch
+     */
+    public function setRegency(?string $regency): Branch
+    {
+        $this->regency = $regency;
+        return $this;
+    }
 }
