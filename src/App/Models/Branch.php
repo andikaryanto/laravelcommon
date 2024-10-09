@@ -126,4 +126,20 @@ class Branch extends BaseModel
         $this->regency = $regency;
         return $this;
     }
+
+    public function getLogoUrl(): ?string
+    {
+        return $this->logo_url;
+    }
+
+    /**
+     *
+     * @param ?string $logoUrl
+     * @return Branch
+     */
+    public function setLogoUrl(?string $logoUrl): Branch
+    {
+        $this->logo_url = $logoUrl;
+        return $this;
+    }
 }
