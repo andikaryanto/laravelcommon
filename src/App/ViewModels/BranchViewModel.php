@@ -47,8 +47,8 @@ class BranchViewModel extends AbstractViewModel
             'phone' => $this->model->getPhone(),
             'fax' => $this->model->getFax(),
             'email' => $this->model->getEmail(),
-            'regency' => $this->model->getRegency(),
-            'logo_url' => $this->model->getLogoUrl()
+            'regency' => $this->model->getRegency(),          
+            'logo_url' => str_replace('public/', '', $this->model->getLogoUrl())
         ];
     }
 }
