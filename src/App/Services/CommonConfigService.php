@@ -13,6 +13,15 @@ class CommonConfigService
         return null;
     }
 
+    public function getEnvValues(): mixed
+    {
+        if (isset(config('common-config')['env'][env('APP_ENV')])) {
+            return config('common-config')['env'][env('APP_ENV')];
+        }
+
+        return null;
+    }
+
     public function getNonEnvValue(string $key): mixed
     {
         if (isset(config('common-config')[$key])) {
