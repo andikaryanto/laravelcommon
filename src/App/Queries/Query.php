@@ -202,15 +202,20 @@ class Query extends Builder
                 $newBuilder = new static($this->connection, $this->grammar, $this->getProcessor());
 
                 $tableAndId = $this->table . '.' . $this->model->getKeyName();
-                $clonedQuery = clone $this;
+                $clonedDistinctQuery = clone $this;
+                $clonedCountQuery = clone $this;
 
-                $lastSizedIds = $this->distinct()
+                $lastSizedIds = $clonedDistinctQuery
+                    ->select($tableAndId)
+                    ->distinct()
                     ->take($this->size)
                     ->offset(($this->page - 1) * $this->size)
                     ->pluck($tableAndId)->toArray();
 
-                $this->total =  $clonedQuery->distinct()->count($tableAndId);
-
+                $this->total = $clonedCountQuery
+                    ->select(DB::Raw("COUNT(DISTINCT $tableAndId) as count"))
+                    ->get()[0]->count;
+                    
                 $newBuilder->fromSelect()
                     ->distinct()
                     ->whereIdIn($lastSizedIds);
