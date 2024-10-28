@@ -202,13 +202,9 @@ class Query extends Builder
                 $newBuilder = new static($this->connection, $this->grammar, $this->getProcessor());
 
                 $tableAndId = $this->table . '.' . $this->model->getKeyName();
-                $ids = $this->distinct()->pluck($tableAndId)->toArray();
-                $this->total = count($ids);
-
-                $lastSizedIds = $ids;
-                if (!empty($this->page) && !empty($this->size) && count($ids) > 0) {
-                    $lastSizedIds = array_slice($ids, $this->size * ($this->page - 1), $this->size);
-                }
+                $lastSizedIds = $this->distinct()->take($this->size)->pluck($tableAndId)->toArray();
+                $clonedQuery = clone $this;
+                $this->total =  $clonedQuery->distinct()->count($tableAndId);
 
                 $newBuilder->fromSelect()
                     ->distinct()
