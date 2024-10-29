@@ -203,20 +203,23 @@ class Query extends Builder
 
                 $tableAndId = $this->table . '.' . $this->model->getKeyName();
                 $clonedDistinctQuery = clone $this;
-                $clonedCountQuery = clone $this;
+                // $clonedCountQuery = clone $this;
 
-                $lastSizedIds = $clonedDistinctQuery
+                $clonedDistinctQuery
                     ->select($tableAndId)
-                    ->distinct()
-                    ->take($this->size)
-                    ->offset(($this->page - 1) * $this->size)
-                    ->pluck($tableAndId)->toArray();
+                    ->distinct();
+                    
+                if (!empty($this->page) && !empty($this->size)) {
+                    $clonedDistinctQuery->take($this->size)
+                    ->offset(($this->page - 1) * $this->size);
+                }
+                $lastSizedIds = $clonedDistinctQuery->pluck($tableAndId)->toArray();
 
-                $clonedCountQuery->orders = [];
+                // $clonedCountQuery->orders = [];
                 
-                $this->total = $clonedCountQuery
-                    ->select(DB::Raw("COUNT(DISTINCT $tableAndId) as count"))
-                    ->get()[0]->count;
+                // $this->total = $clonedCountQuery
+                //     ->select(DB::Raw("COUNT(DISTINCT $tableAndId) as count"))
+                //     ->get()[0]->count;
                     
                 $newBuilder->fromSelect()
                     ->distinct()

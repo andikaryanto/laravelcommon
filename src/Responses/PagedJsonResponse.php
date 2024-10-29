@@ -48,7 +48,8 @@ class PagedJsonResponse extends CollectionResponse
                 '_paging' => [
                     'page' =>  $this->collection->getPage(),
                     'limit' => $this->collection->getSize(),
-                    'total_data' => $this->collection->getTotalRecord()
+                    'total_data' => 999999999, //$this->collection->getTotalRecord(),
+                    'is_last_page' => count($data) < $this->collection->getSize(),
                 ]
             ];
 
