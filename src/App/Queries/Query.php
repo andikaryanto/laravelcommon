@@ -212,6 +212,8 @@ class Query extends Builder
                     ->offset(($this->page - 1) * $this->size)
                     ->pluck($tableAndId)->toArray();
 
+                $clonedCountQuery->orders = [];
+                
                 $this->total = $clonedCountQuery
                     ->select(DB::Raw("COUNT(DISTINCT $tableAndId) as count"))
                     ->get()[0]->count;
