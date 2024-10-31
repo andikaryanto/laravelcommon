@@ -203,7 +203,7 @@ class Query extends Builder
 
                 $tableAndId = $this->table . '.' . $this->model->getKeyName();
                 $clonedDistinctQuery = clone $this;
-                // $clonedCountQuery = clone $this;
+                $clonedCountQuery = clone $this;
 
                 $clonedDistinctQuery
                     ->select($tableAndId)
@@ -214,12 +214,13 @@ class Query extends Builder
                     ->offset(($this->page - 1) * $this->size);
                 }
                 $lastSizedIds = $clonedDistinctQuery->pluck($tableAndId)->toArray();
-
-                // $clonedCountQuery->orders = [];
                 
-                // $this->total = $clonedCountQuery
-                //     ->select(DB::Raw("COUNT(DISTINCT $tableAndId) as count"))
-                //     ->get()[0]->count;
+                // TODO: in the future we might not need this, it gets the query prety slow if we dont fiilter by range date
+                $clonedCountQuery->orders = [];
+                $this->total = $clonedCountQuery
+                    ->select(DB::Raw("COUNT(DISTINCT $tableAndId) as count"))
+                    ->get()[0]->count;
+                // END TODO
                     
                 $newBuilder->fromSelect()
                     ->distinct()

@@ -48,14 +48,18 @@ class PagedJsonResponse extends CollectionResponse
                 '_paging' => [
                     'page' =>  $this->collection->getPage(),
                     'limit' => $this->collection->getSize(),
-                    'total_data' => 999999999, //$this->collection->getTotalRecord(),
+                    // TODO: in the future, we might not need this, it's collected using COUNT(id) of table
+                    // which make slow return from database when data grows 
+                    // what will be affected is pagination in the FE component, because it is used there
+                    'total_data' => $this->collection->getTotalRecord(),
+                    // END TODO
                     'is_last_page' => count($data) < $this->collection->getSize(),
                 ]
             ];
 
             $json['_links'] = [
                 'next_page' => $this->collection->getNextUrl(),
-                'prev_page' => $this->collection->getPreviousUrl(), //$awarePaginator->previousPageUrl(),
+                'prev_page' => $this->collection->getPreviousUrl(),
                 'current_page' => $this->collection->getCurrentUrl()
             ];
             $this->setAdditional($json);
