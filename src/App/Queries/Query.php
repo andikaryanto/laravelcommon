@@ -202,14 +202,26 @@ class Query extends Builder
                 $newBuilder = new static($this->connection, $this->grammar, $this->getProcessor());
 
                 $tableAndId = $this->table . '.' . $this->model->getKeyName();
-                $ids = $this->distinct()->pluck($tableAndId)->toArray();
-                $this->total = count($ids);
+                $clonedDistinctQuery = clone $this;
+                $clonedCountQuery = clone $this;
 
-                $lastSizedIds = $ids;
-                if (!empty($this->page) && !empty($this->size) && count($ids) > 0) {
-                    $lastSizedIds = array_slice($ids, $this->size * ($this->page - 1), $this->size);
+                $clonedDistinctQuery
+                    ->select($tableAndId)
+                    ->distinct();
+                    
+                if (!empty($this->page) && !empty($this->size)) {
+                    $clonedDistinctQuery->take($this->size)
+                    ->offset(($this->page - 1) * $this->size);
                 }
-
+                $lastSizedIds = $clonedDistinctQuery->pluck($tableAndId)->toArray();
+                
+                // TODO: in the future we might not need this, it gets the query prety slow if we dont fiilter by range date
+                $clonedCountQuery->orders = [];
+                $this->total = $clonedCountQuery
+                    ->select(DB::Raw("COUNT(DISTINCT $tableAndId) as count"))
+                    ->get()[0]->count;
+                // END TODO
+                    
                 $newBuilder->fromSelect()
                     ->distinct()
                     ->whereIdIn($lastSizedIds);
