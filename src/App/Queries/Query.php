@@ -129,6 +129,23 @@ class Query extends Builder
         return $collection;
     }
 
+    public function getLazyIterator($columns = ['*'])
+    {
+        $context = $this->onModelContext();
+        $models = null;
+        $lengthAwarePaginator = $context->lengthAwarePaginator;
+        if (!is_null($lengthAwarePaginator)) {
+            $models = $lengthAwarePaginator->items();
+        } else {
+            $models = $context->get($columns)->all();
+        }
+
+        $identityClass = get_class($this->model);
+        foreach($models as $model) {
+            yield $identityClass::hydrate([$model])->first();
+        }
+    }
+
     public function joinWith($table, $first, $operator = null, $second = null, $type = 'inner', $where = false)
     {
         if (!empty($this->joins)) {
