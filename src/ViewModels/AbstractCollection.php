@@ -20,6 +20,11 @@ abstract class AbstractCollection
         $this->request = $request;
     }
 
+    public function getQuery(): Query 
+    {
+        return $this->query;
+    }
+
     public function loadWith(): array
     {
         return [];

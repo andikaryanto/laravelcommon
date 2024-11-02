@@ -22,6 +22,7 @@ class Query extends Builder
     protected ?int $size = null;
     protected ?int $total = 0;
     protected bool $isHaveCount = false;
+    protected bool $doCountTotal = false;
 
 
     // NOTE: we used to do have issue on grammar on laravel 9.xx
@@ -59,6 +60,12 @@ class Query extends Builder
         $this->model = new $identity();
         $this->table = $this->model->getTable();
         $this->fromSelect();
+    }
+
+    public function setDoCountTotal(bool $doCountTotal): Query
+    {
+        $this->doCountTotal = $doCountTotal;
+        return $this;
     }
 
     public function setIsHaveCount(bool $isHaveCount)
@@ -141,7 +148,7 @@ class Query extends Builder
         }
 
         $identityClass = get_class($this->model);
-        foreach($models as $model) {
+        foreach ($models as $model) {
             yield $identityClass::hydrate([$model])->first();
         }
     }
@@ -225,20 +232,22 @@ class Query extends Builder
                 $clonedDistinctQuery
                     ->select($tableAndId)
                     ->distinct();
-                    
+
                 if (!empty($this->page) && !empty($this->size)) {
                     $clonedDistinctQuery->take($this->size)
-                    ->offset(($this->page - 1) * $this->size);
+                        ->offset(($this->page - 1) * $this->size);
                 }
                 $lastSizedIds = $clonedDistinctQuery->pluck($tableAndId)->toArray();
-                
-                // TODO: in the future we might not need this, it gets the query prety slow if we dont fiilter by range date
-                $clonedCountQuery->orders = [];
-                $this->total = $clonedCountQuery
-                    ->select(DB::Raw("COUNT(DISTINCT $tableAndId) as count"))
-                    ->get()[0]->count;
-                // END TODO
-                    
+
+                if($this->doCountTotal) {
+                    // TODO: in the future we might not need this, it gets the query prety slow if we dont fiilter by range date
+                    $clonedCountQuery->orders = [];
+                    $this->total = $clonedCountQuery
+                        ->select(DB::Raw("COUNT(DISTINCT $tableAndId) as count"))
+                        ->get()[0]->count;
+                    // END TODO
+                }
+
                 $newBuilder->fromSelect()
                     ->distinct()
                     ->whereIdIn($lastSizedIds);

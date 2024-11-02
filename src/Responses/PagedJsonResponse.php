@@ -28,7 +28,7 @@ class PagedJsonResponse extends CollectionResponse
      */
     public function getQuery(): ?Query
     {
-        return $this->query;
+        return $this->collection->getQuery();
     }
 
     /**
@@ -39,6 +39,7 @@ class PagedJsonResponse extends CollectionResponse
     public function buildData()
     {
         // DB::enableQueryLog();
+        $this->getQuery()->setDoCountTotal(true);
         $this->collection->filterAndSortFromRequest();
 
         $data = $this->collection->finalArray();
