@@ -239,7 +239,7 @@ class Query extends Builder
                 }
                 $lastSizedIds = $clonedDistinctQuery->pluck($tableAndId)->toArray();
 
-                if($this->doCountTotal) {
+                if ($this->doCountTotal) {
                     // TODO: in the future we might not need this, it gets the query prety slow if we dont fiilter by range date
                     $clonedCountQuery->orders = [];
                     $this->total = $clonedCountQuery

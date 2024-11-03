@@ -4,6 +4,7 @@ namespace LaravelCommon\App\Database\Eloquent\Relations;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use LaravelCommon\App\Services\EagerService;
 use Mockery;
 
 class BelongsToRelation extends AbstractRelation
@@ -48,6 +49,12 @@ class BelongsToRelation extends AbstractRelation
         if (!is_null($this->ownedModel)) {
             return $this->ownedModel;
         }
+
+        // $eagerModel = EagerService::getEager($this->ownerModel, $this->name);
+
+        // if($eagerModel) {
+        //     return $eagerModel;
+        // }
 
         return $this->getRelation()->getResults();
     }
