@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\App;
 use IteratorAggregate;
+use LaravelCommon\App\Services\EagerService;
 use Mockery;
 
 class BelongsToManyRelation extends AbstractRelation implements IteratorAggregate
@@ -163,7 +164,12 @@ class BelongsToManyRelation extends AbstractRelation implements IteratorAggregat
         }
 
         $allCollection = new Collection();
-        $existCollection = $this->getRelation()->get();
+
+        $existCollection = EagerService::getEager($this->parentModel, $this->name);
+
+        if(!$existCollection) {
+            $existCollection = $this->getRelation()->get();
+        } 
 
         foreach ($existCollection as $existModel) {
             $allCollection->add($existModel);

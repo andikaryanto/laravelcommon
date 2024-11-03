@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\App;
+use LaravelCommon\App\Services\EagerService;
 use Mockery;
 
 class HasManyRelation extends AbstractRelation
@@ -50,10 +51,15 @@ class HasManyRelation extends AbstractRelation
      */
     public function get(): ?Collection
     {
-        /**
-         * @var Collection $all
-         */
-        $all = $this->getRelation()->get();
+
+        $all = EagerService::getEager($this->ownerModel, $this->name);
+        if (!$all) {
+            /**
+             * @var Collection $all
+             */
+            $all = $this->getRelation()->get();
+        }
+        
         // $this->addModelCollection will be emptied using emptyAddedModelCollection when data is persisted
         // so when it's not persisted the idea is to get the persisted relation and added collection.
         // when data persisted means $this->addModelCollection is in database then $this->getRelation()->get()

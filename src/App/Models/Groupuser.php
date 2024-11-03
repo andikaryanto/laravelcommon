@@ -15,8 +15,8 @@ class Groupuser extends BaseModel
 
     public function __construct(array $attributes = [])
     {
-        parent::__construct($attributes);
         $this->scopes = new BelongsToManyRelation($this, Scope::class, 'groupuser_scopes');
+        parent::__construct($attributes);
     }
 
     /**

@@ -24,8 +24,8 @@ class Token extends BaseModel
 
     public function __construct(array $attributes = [])
     {
-        parent::__construct($attributes);
         $this->user = new BelongsToRelation($this, User::class, 'user_id');
+        parent::__construct($attributes);
     }
 
     /**
