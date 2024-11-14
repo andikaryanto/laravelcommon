@@ -150,19 +150,22 @@ class UnitOfWork
      */
     public function remove(Model $model)
     {
-        // $modelScope = ModelScope::getInstance();
-        if (!$this->isTransactionStarted) {
-            DB::beginTransaction();
-            $this->isTransactionStarted = true;
+        try {
+            if (!$this->isTransactionStarted) {
+                DB::beginTransaction();
+                $this->isTransactionStarted = true;
+            }
+
+            if (method_exists($model, 'trashed')) {
+                $model->trashed();
+            } else {
+                $model->forceDelete();
+            }
+        } catch (Exception $e) {
+            $this->rollback();
+            throw $e;
         }
 
-        if (method_exists($model, 'trashed')) {
-            $model->trashed();
-        } else {
-            $model->forceDelete();
-        }
-
-        // $modelScope->addModel(ModelScope::PERFORM_DELETE, $model);
         return $this;
     }
 

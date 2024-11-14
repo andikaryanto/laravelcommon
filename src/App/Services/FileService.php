@@ -176,8 +176,8 @@ class FileService
         }
     }
 
-    public function unlink($path)
+    public function unlink($path): bool
     {
-        Storage::delete($path);
+        return Storage::delete($path);
     }
 }
