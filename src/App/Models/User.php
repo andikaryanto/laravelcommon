@@ -57,12 +57,15 @@ class User extends AuthenticableBaseModel
     protected BelongsToRelation $groupuser;
     protected BelongsToRelation $branch;
 
-    public function __construct(array $attributes = [])
+    public function __construct(array $attributes = [], bool $skipRelations = false)
     {
+        if(!$skipRelations){          
+            $this->scopes = new BelongsToManyRelation($this, Scope::class, 'user_scopes');
+            $this->groupuser = new BelongsToRelation($this, Groupuser::class, 'groupuser_id');
+            $this->branch = new BelongsToRelation($this, Branch::class, 'branch_id');  
+        }
+        
         parent::__construct($attributes);
-        $this->scopes = new BelongsToManyRelation($this, Scope::class, 'user_scopes');
-        $this->groupuser = new BelongsToRelation($this, Groupuser::class, 'groupuser_id');
-        $this->branch = new BelongsToRelation($this, Branch::class, 'branch_id');
     }
 
     /**

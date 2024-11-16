@@ -20,7 +20,7 @@ abstract class AbstractCollection
         $this->request = $request;
     }
 
-    public function getQuery(): Query 
+    public function getQuery(): Query
     {
         return $this->query;
     }

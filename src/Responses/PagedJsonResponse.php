@@ -50,7 +50,7 @@ class PagedJsonResponse extends CollectionResponse
                     'page' =>  $this->collection->getPage(),
                     'limit' => $this->collection->getSize(),
                     // TODO: in the future, we might not need this, it's collected using COUNT(id) of table
-                    // which make slow return from database when data grows 
+                    // which make slow return from database when data grows
                     // what will be affected is pagination in the FE component, because it is used there
                     'total_data' => $this->collection->getTotalRecord(),
                     // END TODO
