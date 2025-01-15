@@ -48,15 +48,18 @@ class BelongsToRelation extends AbstractRelation
     {
         $eagerModel = EagerService::getEager($this->ownerModel, $this->name);
 
-        if($eagerModel) {
-            $this->set($eagerModel);
+        if ($eagerModel) {
+            $this->ownedModel = $eagerModel;
         }
 
         if (!is_null($this->ownedModel)) {
             return $this->ownedModel;
         }
 
-        return $this->getRelation()->getResults();
+        $result = $this->getRelation()->getResults();
+        $this->ownedModel = $result;
+
+        return $result;
     }
 
     /**
