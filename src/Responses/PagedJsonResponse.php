@@ -14,7 +14,7 @@ class PagedJsonResponse extends CollectionResponse
     protected ?Query $query = null;
     protected ?Request $request = null;
 
-    public function __construct(string $message, $responseCode = [], PaggedCollection $collection)
+    public function __construct(string $message, array $responseCode = [], ?PaggedCollection $collection = null)
     {
 
         $this->collection = $collection;

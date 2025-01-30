@@ -142,4 +142,15 @@ class Branch extends BaseModel
         $this->logo_url = $logoUrl;
         return $this;
     }
+
+    public function getConfirmationPhone(): ?string
+    {
+        return $this->confirmation_phone;
+    }
+
+    public function setConfirmationPhone(?string $confirmationPhone): Branch
+    {
+        $this->confirmation_phone = $confirmationPhone;
+        return $this;
+    }
 }
