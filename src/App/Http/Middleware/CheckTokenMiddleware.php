@@ -4,8 +4,8 @@ namespace LaravelCommon\App\Http\Middleware;
 
 use Carbon\Carbon;
 use Closure;
-use DateTime;
 use Exception;
+use Illuminate\Support\Facades\Cookie;
 use LaravelCommon\App\Consts\ResponseConst;
 use LaravelCommon\App\Models\User\Token;
 use LaravelCommon\App\Queries\User\TokenQuery;
@@ -54,7 +54,13 @@ class CheckTokenMiddleware
     public function handle(Request $request, Closure $next)
     {
         try {
-            if ($request->hasHeader('Authorization')) {
+            $authorization = Cookie::get('access_token');
+
+            if (is_null($authorization)) {
+                if (!$request->hasHeader('Authorization')) {
+                    return new UnauthorizedResponse('No Authorization header found', ResponseConst::NOT_AUTHORIZED);
+                }
+
                 $bearerAuthorization = $request->header('Authorization');
                 if (empty($bearerAuthorization)) {
                     return new BadRequestResponse('Token is empty', ResponseConst::INVALID_CREDENTIAL);
@@ -67,28 +73,21 @@ class CheckTokenMiddleware
                 }
 
                 $authorization = $authorizationArr[1];
-
-                /**
-                 * @var Token $userToken
-                 */
-                $userToken = $this->tokenQuery->whereToken($authorization)->getIterator()->first();
-                if (empty($userToken)) {
-                    return new BadRequestResponse('No Token Match', ResponseConst::INVALID_CREDENTIAL);
-                }
-
-                if ($userToken->getExpiredAt() < Carbon::now()) {
-                    return new BadRequestResponse('Token Expired', ResponseConst::SESSION_EXPIRED);
-                }
-                $user = $userToken->getUser();
-
-                if ($userToken->getCreatedAtUtc() < $user->getPasswordChangedAt()) {
-                    return new BadRequestResponse('Invalid Token Changed', ResponseConst::INVALID_CREDENTIAL);
-                }
-
-                $request->setUserToken($userToken);
-            } else {
-                return new UnauthorizedResponse('No Authorization header found', ResponseConst::NOT_AUTHORIZED);
             }
+
+            /**
+             * @var Token $userToken
+             */
+            $userToken = $this->tokenQuery->whereToken($authorization)->getIterator()->first();
+            if (empty($userToken)) {
+                return new BadRequestResponse('No Token Match', ResponseConst::INVALID_CREDENTIAL);
+            }
+
+            if ($userToken->getExpiredAt() < Carbon::now()) {
+                return new BadRequestResponse('Token Expired', ResponseConst::SESSION_EXPIRED);
+            }
+
+            $request->setUserToken($userToken);
         } catch (Exception $e) {
             return new BadRequestResponse($e->getMessage());
         }
