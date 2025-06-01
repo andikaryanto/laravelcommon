@@ -10,6 +10,7 @@ use LaravelCommon\App\Database\Eloquent\Relations\BelongsToRelation;
 use LaravelCommon\App\Database\Eloquent\Relations\HasManyRelation;
 use LaravelCommon\App\Models\AuthenticableBaseModel;
 use LaravelCommon\App\Models\BaseModel;
+use LaravelCommon\App\Queries\Query;
 use LaravelCommon\App\Services\IncomingRequestService;
 use LaravelCommon\Exceptions\ValidationException;
 use ReflectionClass;
@@ -116,6 +117,17 @@ class UnitOfWork
         }
 
         return $this;
+    }
+
+    public function massUpdate(Query $query, array $values)
+    {
+        $this->startTransaction();
+        try {
+            $query->update($values);
+        } catch (Exception $e) {
+            $this->rollback();
+            throw $e;
+        }
     }
 
     protected function startTransaction()
