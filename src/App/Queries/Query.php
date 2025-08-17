@@ -48,12 +48,14 @@ class Query extends Builder
      * @return void
      */
     public function __construct(
-        ConnectionInterface $connection = null,
-        Grammar $grammar = null,
-        Processor $processor = null
+        ?ConnectionInterface $connection = null,
+        ?Grammar $grammar = null,
+        ?Processor $processor = null
     ) {
-        $connection = DB::connection();
+        $connection = DB::connection('tenant');
         $grammar = $connection->query()->getGrammar();
+        $currentTenant = app('currentTenant');
+        $connection->setDatabaseName($currentTenant->database);
         parent::__construct($connection, $grammar);
 
         $identity = $this->identityClass();
@@ -80,6 +82,10 @@ class Query extends Builder
         $columnsWithAlias = [];
         foreach ($columns as $column) {
             $columnsWithAlias[] = $this->table . '.' . $column; // . ' as ' .  $this->table . '_' . $column;
+        }
+
+        if (empty($columnsWithAlias)) {
+            $columnsWithAlias[] = $this->table . '.*';
         }
 
         return $columnsWithAlias;
