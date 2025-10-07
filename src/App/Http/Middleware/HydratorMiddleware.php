@@ -186,7 +186,13 @@ class HydratorMiddleware
         $id = $request->route()->parameter($this->key);
         try {
             $resource = $this->repository->findOrFail($id);
-            $previousResource = clone $resource;
+            // TODO: check this, clone wont work, we need to find a better way
+            // clone is actually same instance of resource
+            // laravel might use the same instance when cloning, or maybe we override this logic.
+            // this is bad.
+            // $previousResource = clone $resource;
+            $previousResource = $this->repository->findOrFail($id);
+
             $request->setPreviousResource($previousResource);
         } catch (ModelNotFoundException $e) {
             throw new ResponsableException($e->getMessage(), new NotFoundResponse('No Data Found'));
