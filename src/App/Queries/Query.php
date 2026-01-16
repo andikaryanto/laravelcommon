@@ -52,10 +52,17 @@ class Query extends Builder
         ?Grammar $grammar = null,
         ?Processor $processor = null
     ) {
-        $connection = DB::connection('tenant');
+        if (config('multitenancy.enabled', true) && app()->bound('currentTenant')) {
+            $connection = DB::connection('tenant');
+            $currentTenant = app('currentTenant');
+            if (!is_null($currentTenant) && isset($currentTenant->database)) {
+                $connection->setDatabaseName($currentTenant->database);
+            }
+        } else {
+            $connection = DB::connection();
+        }
+
         $grammar = $connection->query()->getGrammar();
-        $currentTenant = app('currentTenant');
-        $connection->setDatabaseName($currentTenant->database);
         parent::__construct($connection, $grammar);
 
         $identity = $this->identityClass();
