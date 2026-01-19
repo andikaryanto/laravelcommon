@@ -23,6 +23,7 @@ class Query extends Builder
     protected ?int $total = 0;
     protected bool $isHaveCount = false;
     protected bool $doCountTotal = false;
+    protected static array $windowFunctionSupport = [];
 
 
     // NOTE: we used to do have issue on grammar on laravel 9.xx
@@ -178,6 +179,7 @@ class Query extends Builder
                 $newBuilder = new static($this->connection, $this->grammar, $this->getProcessor());
 
                 $tableAndId = $this->table . '.' . $this->model->getKeyName();
+                $orderSql = $this->compileOrderBySql();
                 $countQuery = clone $this;
                 $countQuery->orders = [];
                 $this->total = (int) $countQuery
@@ -207,25 +209,43 @@ class Query extends Builder
                     $newBuilder->groups = $this->groups;
                 }
 
-                if ($this->orders) {
-                    $lastSizedIds = $distinctIdQuery->pluck($tableAndId)->toArray();
-                    $newBuilder->whereIdIn($lastSizedIds);
-                } else {
-                    $newBuilder->whereIn($tableAndId, $distinctIdQuery);
-                }
+                if ($this->orders && $orderSql && $this->supportsWindowFunctions()) {
+                    $rankedQuery = clone $this;
+                    $rankedQuery->columns = null;
+                    $rankedQuery->orders = null;
+                    $rankedQuery->selectRaw("$tableAndId as __id, ROW_NUMBER() OVER (ORDER BY $orderSql) as __pos");
 
-                if ($this->orders && !empty($lastSizedIds)) {
-                    // using WHEN Statement to order the data to suppor sqlite
-                    foreach ($lastSizedIds as $index => $id) {
-                        $table = $this->getTable();
-                        $orderByCases[] = "WHEN $table.id = $id THEN $index";
+                    $orderedIds = $this->newQuery()->fromSub($rankedQuery, '__ranked')
+                        ->selectRaw('__id, MIN(__pos) as __pos')
+                        ->groupBy('__id')
+                        ->orderBy('__pos');
+
+                    if (!empty($this->page) && !empty($this->size)) {
+                        $orderedIds->offset(($this->page - 1) * $this->size)
+                            ->limit($this->size);
                     }
 
-                    $orderByCaseSql = 'CASE ' . implode(' ', $orderByCases) . ' END';
-                    $newBuilder->orderByRaw($orderByCaseSql);
+                    $newBuilder->joinSub($orderedIds, '__ordered', '__ordered.__id', '=', $tableAndId)
+                        ->orderBy('__ordered.__pos');
+                } elseif ($this->orders) {
+                    $lastSizedIds = $distinctIdQuery->pluck($tableAndId)->toArray();
+                    $newBuilder->whereIdIn($lastSizedIds);
 
-                    // TODO: SQLITE did not support this, we might need consider other way
-                    // $newBuilder->orderByRaw('FIELD(' . $tableAndId . ', ' . implode(',', $lastSizedIds) . ')');
+                    if (!empty($lastSizedIds)) {
+                        // using WHEN Statement to order the data to suppor sqlite
+                        foreach ($lastSizedIds as $index => $id) {
+                            $table = $this->getTable();
+                            $orderByCases[] = "WHEN $table.id = $id THEN $index";
+                        }
+
+                        $orderByCaseSql = 'CASE ' . implode(' ', $orderByCases) . ' END';
+                        $newBuilder->orderByRaw($orderByCaseSql);
+
+                        // TODO: SQLITE did not support this, we might need consider other way
+                        // $newBuilder->orderByRaw('FIELD(' . $tableAndId . ', ' . implode(',', $lastSizedIds) . ')');
+                    }
+                } else {
+                    $newBuilder->whereIn($tableAndId, $distinctIdQuery);
                 }
 
                 if (!empty($this->page) && !empty($this->size)) {
@@ -240,6 +260,7 @@ class Query extends Builder
                 $tableAndId = $this->table . '.' . $this->model->getKeyName();
                 $clonedDistinctQuery = clone $this;
                 $clonedCountQuery = clone $this;
+                $orderSql = $this->compileOrderBySql();
 
                 $clonedDistinctQuery
                     ->select($tableAndId)
@@ -250,7 +271,7 @@ class Query extends Builder
                         ->offset(($this->page - 1) * $this->size);
                 }
                 $lastSizedIds = null;
-                if ($this->orders) {
+                if ($this->orders && (!$orderSql || !$this->supportsWindowFunctions())) {
                     $lastSizedIds = $clonedDistinctQuery->pluck($tableAndId)->toArray();
                 }
 
@@ -265,23 +286,41 @@ class Query extends Builder
 
                 $newBuilder->fromSelect()
                     ->distinct();
-                if ($this->orders) {
-                    $newBuilder->whereIdIn($lastSizedIds);
-                } else {
-                    $newBuilder->whereIn($tableAndId, $clonedDistinctQuery);
-                }
+                if ($this->orders && $orderSql && $this->supportsWindowFunctions()) {
+                    $rankedQuery = clone $this;
+                    $rankedQuery->columns = null;
+                    $rankedQuery->orders = null;
+                    $rankedQuery->selectRaw("$tableAndId as __id, ROW_NUMBER() OVER (ORDER BY $orderSql) as __pos");
 
-                if ($this->orders && !empty($lastSizedIds)) {
-                    // using WHEN Statement to order the data to suppor sqlite
-                    foreach ($lastSizedIds as $index => $id) {
-                        $orderByCases[] = "WHEN id = $id THEN $index";
+                    $orderedIds = $this->newQuery()->fromSub($rankedQuery, '__ranked')
+                        ->selectRaw('__id, MIN(__pos) as __pos')
+                        ->groupBy('__id')
+                        ->orderBy('__pos');
+
+                    if (!empty($this->page) && !empty($this->size)) {
+                        $orderedIds->offset(($this->page - 1) * $this->size)
+                            ->limit($this->size);
                     }
 
-                    $orderByCaseSql = 'CASE ' . implode(' ', $orderByCases) . ' END';
-                    $newBuilder->orderByRaw($orderByCaseSql);
+                    $newBuilder->joinSub($orderedIds, '__ordered', '__ordered.__id', '=', $tableAndId)
+                        ->orderBy('__ordered.__pos');
+                } elseif ($this->orders) {
+                    $newBuilder->whereIdIn($lastSizedIds);
 
-                    // TODO: SQLITE did not support this, we might need consider other way
-                    // $newBuilder->orderByRaw('FIELD(' . $tableAndId . ', ' . implode(',', $lastSizedIds) . ')');
+                    if (!empty($lastSizedIds)) {
+                        // using WHEN Statement to order the data to suppor sqlite
+                        foreach ($lastSizedIds as $index => $id) {
+                            $orderByCases[] = "WHEN id = $id THEN $index";
+                        }
+
+                        $orderByCaseSql = 'CASE ' . implode(' ', $orderByCases) . ' END';
+                        $newBuilder->orderByRaw($orderByCaseSql);
+
+                        // TODO: SQLITE did not support this, we might need consider other way
+                        // $newBuilder->orderByRaw('FIELD(' . $tableAndId . ', ' . implode(',', $lastSizedIds) . ')');
+                    }
+                } else {
+                    $newBuilder->whereIn($tableAndId, $clonedDistinctQuery);
                 }
 
                 if (!empty($this->page) && !empty($this->size)) {
@@ -436,6 +475,65 @@ class Query extends Builder
     public function identityClass()
     {
         // return get_class($this->model);
+    }
+
+    protected function supportsWindowFunctions(): bool
+    {
+        $driver = $this->connection->getDriverName();
+        if (isset(self::$windowFunctionSupport[$driver])) {
+            return self::$windowFunctionSupport[$driver];
+        }
+
+        if ($driver === 'sqlite') {
+            self::$windowFunctionSupport[$driver] = false;
+            return false;
+        }
+
+        $versionRow = $this->connection->selectOne('select version() as v');
+        $version = is_object($versionRow) ? ($versionRow->v ?? '') : '';
+        $isMaria = stripos($version, 'MariaDB') !== false;
+
+        if (preg_match('/(\\d+)\\.(\\d+)\\.(\\d+)/', $version, $matches)) {
+            $major = (int) $matches[1];
+            $minor = (int) $matches[2];
+            $patch = (int) $matches[3];
+
+            if ($isMaria) {
+                self::$windowFunctionSupport[$driver] = ($major > 10) || ($major === 10 && $minor >= 2);
+                return self::$windowFunctionSupport[$driver];
+            }
+
+            self::$windowFunctionSupport[$driver] = ($major > 8) || ($major === 8 && $minor >= 0);
+            return self::$windowFunctionSupport[$driver];
+        }
+
+        self::$windowFunctionSupport[$driver] = false;
+        return false;
+    }
+
+    protected function compileOrderBySql(): ?string
+    {
+        if (empty($this->orders)) {
+            return null;
+        }
+
+        $segments = [];
+        foreach ($this->orders as $order) {
+            if (($order['type'] ?? '') === 'Raw') {
+                $segments[] = $order['sql'];
+                continue;
+            }
+
+            if (($order['type'] ?? '') === 'Basic' && isset($order['column'])) {
+                $direction = $order['direction'] ?? 'asc';
+                $segments[] = $this->grammar->wrap($order['column']) . ' ' . $direction;
+                continue;
+            }
+
+            return null;
+        }
+
+        return implode(', ', $segments);
     }
 
     /**
