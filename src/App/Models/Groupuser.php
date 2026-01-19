@@ -7,27 +7,25 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use LaravelCommon\App\Database\Eloquent\Relations\BelongsToManyRelation;
 
-class Groupuser extends Model
+class Groupuser extends BaseModel
 {
     use HasFactory;
-    use TraitModel;
-
 
     protected BelongsToManyRelation $scopes;
 
     public function __construct(array $attributes = [])
     {
-        parent::__construct($attributes);
         $this->scopes = new BelongsToManyRelation($this, Scope::class, 'groupuser_scopes');
+        parent::__construct($attributes);
     }
 
     /**
      *
-     * @return BelongsToManyRelation
+     * @return Collection
      */
     public function getScopes()
     {
-        return $this->scopes;
+        return $this->scopes->getIterator();
     }
 
     /**

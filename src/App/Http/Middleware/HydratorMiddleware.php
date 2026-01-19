@@ -14,7 +14,7 @@ use LaravelCommon\App\Consts\ResponseConst;
 use LaravelCommon\App\Exceptions\ModelException;
 use LaravelCommon\Responses\BadRequestResponse;
 
-class Hydrator
+class HydratorMiddleware
 {
     protected array $hydrateKeys = [];
 
@@ -29,7 +29,7 @@ class Hydrator
     protected Request $request;
 
     /**
-     * Hydrator constructor
+     * HydratorMiddleware constructor
      *
      * @param string $key
      * @param Repository $repository
@@ -186,6 +186,14 @@ class Hydrator
         $id = $request->route()->parameter($this->key);
         try {
             $resource = $this->repository->findOrFail($id);
+            // TODO: check this, clone wont work, we need to find a better way
+            // clone is actually same instance of resource
+            // laravel might use the same instance when cloning, or maybe we override this logic.
+            // this is bad.
+            // $previousResource = clone $resource;
+            $previousResource = $this->repository->findOrFail($id);
+
+            $request->setPreviousResource($previousResource);
         } catch (ModelNotFoundException $e) {
             throw new ResponsableException($e->getMessage(), new NotFoundResponse('No Data Found'));
         }
@@ -199,9 +207,9 @@ class Hydrator
      * @param string $key
      * @param array $modelSetter
      * @param array $relatedObjectGetter
-     * @return Hydrator
+     * @return HydratorMiddleware
      */
-    public function when(string $key, array $modelSetter, array $relatedObjectGetter = []): Hydrator
+    public function when(string $key, array $modelSetter, array $relatedObjectGetter = [], $callback = null): HydratorMiddleware
     {
         $input = $this->request->input();
 
@@ -210,23 +218,41 @@ class Hydrator
         $modelSetterFunction = $modelSetter[1];
         $field = $keyArr[0];
 
-        if (isset($input[$field]) && !empty($relatedObjectGetter)) {
-            $id = $keyArr[1];
-            $relatedValue = $input[$field][$id];
-
-            $relatedRepository = $relatedObjectGetter[0];
-            $relatedFunction = $relatedObjectGetter[1];
-            $relatedObject = $relatedRepository->$relatedFunction($relatedValue);
-
-            if (is_null($relatedObject)) {
-                throw new ModelException($field . ' with ID ' . $relatedValue . ' not found');
-            }
-
-            $model->$modelSetterFunction($relatedObject);
+        if ($callback != null && isset($input[$field])) {
+            $callback($input[$field]);
+            return $this;
         }
 
-        if (isset($input[$field]) && empty($relatedObjectGetter)) {
-            $model->$modelSetterFunction($input[$field]);
+        if (key_exists($field, $input)) {
+            if (!empty($relatedObjectGetter)) {
+                $id = $keyArr[1];
+                $relatedValue = $input[$field][$id];
+
+                $relatedRepository = $relatedObjectGetter[0];
+                $relatedFunction = $relatedObjectGetter[1];
+                $relatedObject = $relatedRepository->$relatedFunction($relatedValue);
+
+                $relationNullable = false;
+                if (isset($relatedObjectGetter[2])) {
+                    $relationNullable = $relatedObjectGetter[2];
+                }
+
+                if (is_null($relatedObject) && !$relationNullable) {
+                    throw new ModelException($field . ' with ID ' . $relatedValue . ' not found');
+                }
+
+                if (!is_null($relatedObject)) {
+                    $model->$modelSetterFunction($relatedObject);
+                } elseif ($relationNullable) {
+                    $model->$modelSetterFunction(null);
+                }
+            } else {
+                if (!is_null($input[$field])) {
+                    $model->$modelSetterFunction($this->request->$field);
+                } else {
+                    $model->$modelSetterFunction(null);
+                }
+            }
         }
 
         return $this;

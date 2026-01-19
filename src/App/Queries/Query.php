@@ -2,10 +2,8 @@
 
 namespace LaravelCommon\App\Queries;
 
-use Exception;
 use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Processors\Processor;
 use Illuminate\Database\Query\Grammars\Grammar;
 use Illuminate\Database\Query\Builder;
@@ -17,31 +15,63 @@ class Query extends Builder
 {
     protected $model;
     protected string $table;
+    protected bool $asRaw = false;
+    protected array $addedSelect = [];
     protected ?LengthAwarePaginator $lengthAwarePaginator = null;
-    // protected ConnectionInterface $connection;
-    // protected ?Grammar $grammar = null;
-    // protected ?Processor $processor = null;
+    protected ?int $page = null;
+    protected ?int $size = null;
+    protected ?int $total = 0;
+    protected bool $isHaveCount = false;
+    protected bool $doCountTotal = false;
+
+
+    // NOTE: we used to do have issue on grammar on laravel 9.xx
+    // when use DB::connection()->query()->getGrammar() the grammar is always incorrect while querying the database
+    // this is constructor that fix the issue on laravel 9.xx
+    // public function __construct(
+    //     Model $model,
+    //     ConnectionInterface $connection,
+    //     Grammar $grammar = null,
+    //     Processor $processor = null
+    // ) {
+    //     $grammar = $connection->query()->getGrammar();
+    //     parent::__construct($connection, $grammar, $processor);
+
+    //     $this->model = $model;
+    //     $this->table = $model->getTable();
+    //     $this->fromSelect();
+    // }
 
     /**
      * Create a new query builder instance.
      *
-     * @param  \Illuminate\Database\ConnectionInterface  $connection
-     * @param  \Illuminate\Database\Query\Grammars\Grammar|null  $grammar
-     * @param  \Illuminate\Database\Query\Processors\Processor|null  $processor
      * @return void
      */
     public function __construct(
-        Model $model,
-        ConnectionInterface $connection,
+        ConnectionInterface $connection = null,
         Grammar $grammar = null,
         Processor $processor = null
     ) {
+        $connection = DB::connection();
         $grammar = $connection->query()->getGrammar();
-        parent::__construct($connection, $grammar, $processor);
+        parent::__construct($connection, $grammar);
 
-        $this->model = $model;
-        $this->table = $model->getTable();
+        $identity = $this->identityClass();
+        $this->model = new $identity();
+        $this->table = $this->model->getTable();
         $this->fromSelect();
+    }
+
+    public function setDoCountTotal(bool $doCountTotal): Query
+    {
+        $this->doCountTotal = $doCountTotal;
+        return $this;
+    }
+
+    public function setIsHaveCount(bool $isHaveCount)
+    {
+        $this->isHaveCount = $isHaveCount;
+        return $this;
     }
 
     protected function getSelectColumns()
@@ -55,6 +85,35 @@ class Query extends Builder
         return $columnsWithAlias;
     }
 
+    public function setAsRaw(bool $asRaw)
+    {
+        $this->asRaw = $asRaw;
+        return $this;
+    }
+
+    public function addSelect($column)
+    {
+        $this->addedSelect[] = $column;
+        return parent::addSelect($column);
+    }
+
+    /**
+     * Order by column and add select with alias
+     *
+     * @param string $column column to order
+     * @param string $direction direction of order (ASC|DESC)
+     * @return $this
+     */
+    public function orderByAndAddSelect($column, $direction = 'ASC')
+    {
+        $tableColum = explode('.', $column);
+        $orderTable = $tableColum[0];
+        if ($orderTable != $this->table) {
+            $this->addSelect($column . ' as ' . implode('_', $tableColum));
+        }
+        $this->orderBy($column, $direction);
+    }
+
     /**
      * Undocumented function
      *
@@ -63,16 +122,35 @@ class Query extends Builder
      */
     public function getIterator($columns = ['*'])
     {
-        $queryBuilder = $this->onModelContext();
+        $context = $this->onModelContext();
         $models = null;
-        if (!is_null($queryBuilder->lengthAwarePaginator)) {
-            $models = $queryBuilder->lengthAwarePaginator->items();
+        $lengthAwarePaginator = $context->lengthAwarePaginator;
+        if (!is_null($lengthAwarePaginator)) {
+            $models = $lengthAwarePaginator->items();
         } else {
-            $models = $queryBuilder->get($columns)->all();
+            $models = $context->get($columns)->all();
         }
 
-        $identityClass = get_class($queryBuilder->model);
-        return $identityClass::hydrate($models);
+        $identityClass = get_class($this->model);
+        $collection = $identityClass::hydrate($models);
+        return $collection;
+    }
+
+    public function getLazyIterator($columns = ['*'])
+    {
+        $context = $this->onModelContext();
+        $models = null;
+        $lengthAwarePaginator = $context->lengthAwarePaginator;
+        if (!is_null($lengthAwarePaginator)) {
+            $models = $lengthAwarePaginator->items();
+        } else {
+            $models = $context->get($columns)->all();
+        }
+
+        $identityClass = get_class($this->model);
+        foreach ($models as $model) {
+            yield $identityClass::hydrate([$model])->first();
+        }
     }
 
     public function joinWith($table, $first, $operator = null, $second = null, $type = 'inner', $where = false)
@@ -85,7 +163,6 @@ class Query extends Builder
             }
         }
 
-        // echo 'jasasdsaoin';
         return  $this->join($table, $first, $operator, $second, $type, $where);
     }
 
@@ -96,22 +173,139 @@ class Query extends Builder
 
     public function onModelContext()
     {
-        if (!empty($this->joins)) {
-            $newBuilder = new self($this->model, $this->connection, $this->grammar, $this->getProcessor());
-            $this->limit = null;
-            $this->offset = null;
-            $ids = $this->distinct()->pluck($this->table . '.' . $this->model->getKeyName());
+        if (!empty($this->joins) && !$this->asRaw) {
+            if ($this->isHaveCount) {
+                $newBuilder = new static($this->connection, $this->grammar, $this->getProcessor());
 
-            $newBuilder->fromSelect()
-                ->whereIdIn($ids->toArray())
-                ->paging(
-                    $this->getPerPage(),
-                    $this->getPage()
-                );
-            $this->lengthAwarePaginator = $newBuilder->lengthAwarePaginator;
+                $tableAndId = $this->table . '.' . $this->model->getKeyName();
+                $ids = $this->distinct()->pluck($tableAndId)->toArray();
+                $this->total = count($ids);
+
+                $lastSizedIds = $ids;
+                if (!empty($this->page) && !empty($this->size) && count($ids) > 0) {
+                    $lastSizedIds = array_slice($ids, $this->size * ($this->page - 1), $this->size);
+                }
+
+                $newBuilder->fromSelect();
+
+                if ($this->groups) {
+                    // only do join and addselect when have group
+                    // so we are keeping the record clean
+                    $newBuilder->addSelect($this->addedSelect);
+                    $newBuilder->joins = $this->joins;
+                    foreach ($this->wheres as $where) {
+                        $newBuilder->wheres[] = $where;
+                        $newBuilder->bindings['where'] = $this->bindings['where'];
+                    }
+                    $newBuilder->groups = $this->groups;
+                }
+
+                $newBuilder->whereIdIn($lastSizedIds);
+
+                if ($this->orders && count($lastSizedIds) > 0) {
+                    // using WHEN Statement to order the data to suppor sqlite
+                    foreach ($lastSizedIds as $index => $id) {
+                        $table = $this->getTable();
+                        $orderByCases[] = "WHEN $table.id = $id THEN $index";
+                    }
+
+                    $orderByCaseSql = 'CASE ' . implode(' ', $orderByCases) . ' END';
+                    $newBuilder->orderByRaw($orderByCaseSql);
+
+                    // TODO: SQLITE did not support this, we might need consider other way
+                    // $newBuilder->orderByRaw('FIELD(' . $tableAndId . ', ' . implode(',', $lastSizedIds) . ')');
+                }
+
+                if (!empty($this->page) && !empty($this->size)) {
+                    $newBuilder->paging(1, $this->size, $this->getSelectColumns());
+                }
+
+                $this->lengthAwarePaginator = $newBuilder->lengthAwarePaginator;
+                return $newBuilder;
+            } else {
+                $newBuilder = new static($this->connection, $this->grammar, $this->getProcessor());
+
+                $tableAndId = $this->table . '.' . $this->model->getKeyName();
+                $clonedDistinctQuery = clone $this;
+                $clonedCountQuery = clone $this;
+
+                $clonedDistinctQuery
+                    ->select($tableAndId)
+                    ->distinct();
+
+                if (!empty($this->page) && !empty($this->size)) {
+                    $clonedDistinctQuery->take($this->size)
+                        ->offset(($this->page - 1) * $this->size);
+                }
+                $lastSizedIds = $clonedDistinctQuery->pluck($tableAndId)->toArray();
+
+                if ($this->doCountTotal) {
+                    // TODO: in the future we might not need this, it gets the query prety slow if we dont fiilter by range date
+                    $clonedCountQuery->orders = [];
+                    $this->total = $clonedCountQuery
+                        ->select(DB::Raw("COUNT(DISTINCT $tableAndId) as count"))
+                        ->get()[0]->count;
+                    // END TODO
+                }
+
+                $newBuilder->fromSelect()
+                    ->distinct()
+                    ->whereIdIn($lastSizedIds);
+
+                if ($this->orders && count($lastSizedIds) > 0) {
+                    // using WHEN Statement to order the data to suppor sqlite
+                    foreach ($lastSizedIds as $index => $id) {
+                        $orderByCases[] = "WHEN id = $id THEN $index";
+                    }
+
+                    $orderByCaseSql = 'CASE ' . implode(' ', $orderByCases) . ' END';
+                    $newBuilder->orderByRaw($orderByCaseSql);
+
+                    // TODO: SQLITE did not support this, we might need consider other way
+                    // $newBuilder->orderByRaw('FIELD(' . $tableAndId . ', ' . implode(',', $lastSizedIds) . ')');
+                }
+
+                if (!empty($this->page) && !empty($this->size)) {
+                    $newBuilder->paging(1, $this->size, $this->getSelectColumns());
+                }
+
+                $this->lengthAwarePaginator = $newBuilder->lengthAwarePaginator;
+                return $newBuilder;
+            }
+        } else {
+            if (!$this->asRaw) {
+                if (!empty($this->page) && !empty($this->size)) {
+                    $this->paging($this->page, $this->size, $this->getSelectColumns());
+                    $this->total = $this->lengthAwarePaginator->total();
+                }
+            } else {
+                $this->total = $this->count();
+                if (!empty($this->page) && !empty($this->size)) {
+                    $offset = ($this->page - 1) * $this->size;
+
+                    $this->offset($offset)
+                        ->limit($this->size);
+
+                    $dataQuery = $this->get();
+                    $paginator = new LengthAwarePaginator(
+                        $dataQuery,
+                        $this->total,
+                        $this->size,
+                        $this->page,
+                        ['path' => request()->url(), 'query' => request()->query()] // For proper pagination links
+                    );
+
+                    $this->lengthAwarePaginator = $paginator;
+                }
+            }
         }
 
         return $this;
+    }
+
+    public function groupByContextFields()
+    {
+        return $this->groupBy($this->getSelectColumns());
     }
 
     /**
@@ -121,35 +315,54 @@ class Query extends Builder
      */
     public function reset()
     {
-        $this->groups = [];
-        $this->wheres = [];
-        $this->joins = [];
-        $this->columns = [];
-        $this->from = null;
-        $this->lengthAwarePaginator = null;
+        return $this->newQuery();
+    }
+
+    public function setPage(int $page): Query
+    {
+        $this->page = $page;
+
+        return $this;
+    }
+
+    public function setSize(int $size): Query
+    {
+        $this->size = $size;
+
+        return $this;
+    }
+
+    public function setPaging(int $page, int $size): Query
+    {
+        $this->page = $page;
+        $this->size = $size;
+
         return $this;
     }
 
     /**
      * paginate
      *
-     * @param integer $perPage
-     * @param integer|null $page
      * @param array $columns
      * @param string $pageName
      * @return Query
      */
-    public function paging(
-        int $perPage = 15,
-        ?int $page = null,
+    private function paging(
+        int $page,
+        int $size,
         array $columns = ['*'],
         string $pageName = 'page'
     ): Query {
-        $this->lengthAwarePaginator = $this->paginate($perPage, $columns, $pageName, $page);
+        $this->lengthAwarePaginator = $this->paginate($size, $columns, $pageName, $page);
         return $this;
     }
 
     /**
+     * Be Aware, this is for get url only,
+     * the value of current page, next page, prev page might not be relevant
+     *
+     * when we are paginate the data
+     * this awarepaginator will always contains 1 page only with the size of it paging size.
      *
      * @return LengthAwarePaginator|null
      */
@@ -175,7 +388,7 @@ class Query extends Builder
      */
     public function getPage(): ?int
     {
-        return $this->lengthAwarePaginator?->currentPage();
+        return $this->page;
     }
 
     /** Get total data
@@ -184,7 +397,7 @@ class Query extends Builder
      */
     public function getTotal(): ?int
     {
-        return $this->lengthAwarePaginator?->total();
+        return $this->total;
     }
 
     /** Get total data
@@ -193,7 +406,7 @@ class Query extends Builder
      */
     public function getPerPage(): ?int
     {
-        return $this->lengthAwarePaginator?->perPage();
+        return $this->size;
     }
 
     /**
@@ -201,21 +414,9 @@ class Query extends Builder
      *
      * @return string
      */
-    public function identityClass(): string
+    public function identityClass()
     {
-        return get_class($this->model);
-    }
-
-
-
-    /**
-     * get view model collection class
-     *
-     * @return string
-     */
-    public function collectionClass()
-    {
-        throw new Exception('"Query::collectionClass needs to be overridden"');
+        // return get_class($this->model);
     }
 
     /**
@@ -225,7 +426,13 @@ class Query extends Builder
      */
     public function whereIdIn(array $ids)
     {
-        $this->whereIn('id', $ids);
+        $this->whereIn($this->table . '.id', $ids);
+        return $this;
+    }
+
+    public function noResult()
+    {
+        $this->whereRaw('1 = 0');
         return $this;
     }
 }

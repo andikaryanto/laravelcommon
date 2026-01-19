@@ -4,6 +4,7 @@ namespace LaravelCommon\ViewModels;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use LaravelCommon\Responses\BaseResponse;
 
 abstract class AbstractViewModel
@@ -40,21 +41,42 @@ abstract class AbstractViewModel
         return '#unimplemented';
     }
 
+    public static function loadWith()
+    {
+        return [];
+    }
+
+    public function loadRelation()
+    {
+        $this->model->load(static::loadWith());
+        return $this;
+    }
+
     /**
      * Convert instance to array add auto add resource available
      */
     public function finalArray()
     {
-        $this->resource['id'] = $this->model->getId();
+        $timeZone = config('common-config')['time_zone'];
+        $settingTimeZone = $timeZone['time_zone'];
 
-        $this->resource = array_merge($this->resource, $this->toArray());
+
+        $this->resource = $this->toArray();
 
         $this->resource['created_at'] =  !is_null($this->model->created_at)
-            ? $this->model->created_at->format('Y-m-d H:i:s')
+            ? (
+                $timeZone['use_custom_timezone'] ?
+                $this->model->created_at->setTimeZOne($settingTimeZone)->format('Y-m-d H:i:s') :
+                $this->model->created_at->format('Y-m-d H:i:s')
+            )
             : null;
 
         $this->resource['updated_at'] = !is_null($this->model->updated_at)
-            ? $this->model->updated_at->format('Y-m-d H:i:s')
+            ? (
+                $timeZone['use_custom_timezone'] ?
+                $this->model->updated_at->setTimeZOne($settingTimeZone)->format('Y-m-d H:i:s') :
+                $this->model->updated_at->format('Y-m-d H:i:s')
+            )
             : null;
 
         $this->resource['_link']['self'] =  config('app.url') . $this->link();
@@ -74,7 +96,7 @@ abstract class AbstractViewModel
      */
     public function embedResource(
         string $key,
-        AbstractViewModel|AbstractCollection $value
+        AbstractViewModel|Collection $value
     ) {
 
         if ($this->request != null && $this->request->getPathInfo() == '/graphql') {
@@ -82,16 +104,40 @@ abstract class AbstractViewModel
                 $this->resource[$key] = $value->finalArray();
             }
 
-            if ($value instanceof AbstractCollection) {
-                $this->resource[$key] = $value->finalProcceed();
+            if ($value instanceof Collection) {
+                $viewModelArray = [];
+                foreach ($value as $viewmodel) {
+                    /**
+                     * @var AbstractViewModel $viewmodel
+                     */
+                    $viewModelArray[] = $viewmodel->finalArray();
+                }
+                $this->resource[$key] = $viewModelArray;
             }
         } else {
+            $useResourceKey = config('common-config')['api']['use_resource_key'];
             if ($value instanceof AbstractViewModel) {
-                $this->resource[BaseResponse::RESOURCES_KEY][$key] = $value->finalArray();
+                if ($useResourceKey) {
+                    $this->resource[BaseResponse::RESOURCES_KEY][$key] = $value->finalArray();
+                } else {
+                    $this->resource[$key] = $value->finalArray();
+                }
             }
 
-            if ($value instanceof AbstractCollection) {
-                $this->resource[BaseResponse::RESOURCES_KEY][$key] = $value->finalProcceed();
+            if ($value instanceof Collection) {
+                $viewModelArray = [];
+                foreach ($value as $viewmodel) {
+                    /**
+                     * @var AbstractViewModel $viewmodel
+                     */
+                    $viewModelArray[] = $viewmodel->finalArray();
+                }
+
+                if ($useResourceKey) {
+                    $this->resource[BaseResponse::RESOURCES_KEY][$key] = $viewModelArray;
+                } else {
+                    $this->resource[$key] = $viewModelArray;
+                }
             }
         }
     }
@@ -130,6 +176,11 @@ abstract class AbstractViewModel
      * @return mixed
      */
     public function getEntity()
+    {
+        return $this->model;
+    }
+
+    public function getModel()
     {
         return $this->model;
     }

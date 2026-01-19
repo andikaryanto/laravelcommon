@@ -15,24 +15,4 @@ class ScopeRepository extends Repository
     {
         parent::__construct(Scope::class);
     }
-
-    /**
-     * @inheritDoc
-     *
-     * @return string
-     */
-    public function collectionClass(): string
-    {
-        return ScopeCollection::class;
-    }
-
-    /**
-     * @inheritDoc
-     *
-     * @return stirng
-     */
-    public function viewModelClass(): string
-    {
-        return ScopeViewModel::class;
-    }
 }

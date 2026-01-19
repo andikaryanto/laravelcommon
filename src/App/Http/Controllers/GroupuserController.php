@@ -41,10 +41,6 @@ class GroupuserController extends Controller
 
     public function getAll(Request $request)
     {
-        $users = $this->groupuserQuery
-            ->whereUserCreatedAfter(Carbon::create('2023-06-12 18:56:55'))
-            ->whereScope((new Scope())->setId(2));
-
-        return new PagedJsonResponse('OK', [], new GroupuserCollection($users, $request));
+        return new PagedJsonResponse('OK', [], new GroupuserCollection($this->groupuserQuery, $request));
     }
 }

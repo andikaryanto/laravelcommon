@@ -19,6 +19,13 @@ class TokenViewModel extends AbstractViewModel
      */
     protected $model;
 
+    public static function loadWith()
+    {
+        return [
+            'user' => UserViewModel::loadWith()
+        ];
+    }
+
     /**
      * @inheritdoc
      */
@@ -37,8 +44,9 @@ class TokenViewModel extends AbstractViewModel
     public function toArray()
     {
         return [
-            'token' => $this->model->token,
-            'expired_at' => $this->model->expired_at
+            'id' => $this->model->getId(),
+            'token' => $this->model->getToken(),
+            'expired_at' => $this->model->getExpiredAt()
         ];
     }
 }

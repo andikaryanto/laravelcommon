@@ -2,12 +2,11 @@
 
 namespace LaravelCommon\App\Services;
 
-use DateTime;
 use LaravelCommon\App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use LaravelCommon\App\Models\User\Token;
 use LaravelCommon\App\Queries\UserQuery;
-use LaravelCommon\Utilities\Database\ModelUnit;
+use LaravelCommon\Utilities\Database\UnitOfWork;
 
 class UserService
 {
@@ -21,9 +20,9 @@ class UserService
     /**
      * Undocumented variable
      *
-     * @var ModelUnit
+     * @var UnitOfWork
      */
-    protected ModelUnit $modelUnit;
+    protected UnitOfWork $unitOfWork;
 
     /**
      * Undocumented variable
@@ -36,16 +35,16 @@ class UserService
      *
      *
      * @param UserQuery $userRepository
-     * @param ModelUnit $entityManager
+     * @param UnitOfWork $entityManager
      * @param Jwt $jwt
      */
     public function __construct(
         UserQuery $userQuery,
-        ModelUnit $modelUnit,
+        UnitOfWork $unitOfWork,
         Jwt $jwt
     ) {
         $this->userQuery = $userQuery;
-        $this->modelUnit = $modelUnit;
+        $this->unitOfWork = $unitOfWork;
         $this->jwt = $jwt;
     }
 
@@ -56,13 +55,13 @@ class UserService
      * @param string $password
      * @return Token
      */
-    public function generateToken(string $username, string $password)
+    public function generateToken(string $email, string $password)
     {
 
         /**
          * @var User
          */
-        $user = $this->userQuery->whereUsername($username)->getIterator()->first();
+        $user = $this->userQuery->whereEmail($email)->getIterator()->first();
 
         if (empty($user)) {
             return null;
@@ -86,8 +85,8 @@ class UserService
 
         $userToken = $this->jwt->createUserToken($user);
 
-        $this->modelUnit->persist($userToken);
-        $this->modelUnit->flush();
+        $this->unitOfWork->persist($userToken);
+        $this->unitOfWork->flush();
 
         return $userToken;
     }

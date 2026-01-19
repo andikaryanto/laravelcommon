@@ -99,9 +99,15 @@ class FileService
         $year = $dateTime->format('Y');
         $month = $dateTime->format('m');
 
+        // $path = 'public/' . $path;
         $path .= "$year/$month";
+        $publiPath = 'public/' . $path;
 
-        $path = $uploadedFile->store($path);
+        if ($this->hashedName) {
+            $path = $uploadedFile->store($publiPath);
+        } else {
+            $path = $uploadedFile->storeAs($publiPath, $uploadedFile->getClientOriginalName());
+        }
 
         if (is_bool($path)) {
             throw new Exception("Failed to move file");
@@ -113,6 +119,7 @@ class FileService
 
         $file = new File();
         $file->setName($path);
+        $file->setOriginalName($uploadedFile->getClientOriginalName());
         $file->setExtension($extension);
         $file->setMimeType($type);
         $file->setSize($size);
@@ -167,5 +174,10 @@ class FileService
         foreach ($this->files as $file) {
             Storage::delete($file->getName());
         }
+    }
+
+    public function unlink($path): bool
+    {
+        return Storage::delete($path);
     }
 }

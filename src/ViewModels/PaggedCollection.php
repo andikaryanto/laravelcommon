@@ -2,13 +2,24 @@
 
 namespace LaravelCommon\ViewModels;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
+use LaravelCommon\App\Queries\Query;
 
 abstract class PaggedCollection extends AbstractCollection
 {
     protected ?int $page = null;
     protected ?int $size = null;
     protected ?int $totalRecord = null;
+    protected bool $disableKeywordSearch;
+    protected bool $disableDefaultOrder;
+
+    public function __construct(Query $query, ?Request $request = null, bool $disableKeywordSearch = false, bool $disableDefaultOrder = false)
+    {
+        parent::__construct($query, $request);
+        $this->disableKeywordSearch = $disableKeywordSearch;
+        $this->disableDefaultOrder = $disableDefaultOrder;
+    }
 
 
     /**
@@ -25,17 +36,22 @@ abstract class PaggedCollection extends AbstractCollection
         $size = config("common-config")['collection_paging']['size'];
         $page = 1;
 
+        if (!$this->disableDefaultOrder) {
+            if (isset($request->order_direction)) {
+                $sortDirection = strtolower($request->order_direction);
+            }
 
-        if (isset($request->order_direction)) {
-            $sortDirection = strtolower($request->order_direction);
-        }
+            if (isset($request->order_by)) {
+                $sortColumn = $request->order_by;
+            }
 
-        if (isset($request->order_by)) {
-            $sortColumn = $request->order_by;
-        }
-
-        if (!is_null($sortColumn)) {
-            $this->query->orderBy($table . '.' . $sortColumn, $sortDirection);
+            if (!is_null($sortColumn)) {
+                if (str_contains($sortColumn, '.')) {
+                    $this->query->orderByAndAddSelect($sortColumn, $sortDirection);
+                } else {
+                    $this->query->orderBy($table . '.' . $sortColumn, $sortDirection);
+                }
+            }
         }
 
         if (isset($request->size)) {
@@ -46,12 +62,14 @@ abstract class PaggedCollection extends AbstractCollection
             $page = $request->page;
         }
 
-        if (isset($request->keyword)) {
+        if (isset($request->keyword) && !$this->disableKeywordSearch) {
             $keyword = $request->keyword;
             $searchColumns = Schema::getColumnListing($this->query->getTable());
-            foreach ($searchColumns as $column) {
-                $this->query->orWhere($table . '.' . $column, 'like', '%' . $keyword . '%');
-            }
+            $this->query->where(function ($query) use ($searchColumns, $keyword, $table) {
+                foreach ($searchColumns as $column) {
+                    $query->orWhere($table . '.' . $column, 'like', '%' . $keyword . '%');
+                }
+            });
         } else {
             if (isset($request->search_by) && isset($request->search_value)) {
                 $searchBy = $request->search_by;
@@ -63,7 +81,7 @@ abstract class PaggedCollection extends AbstractCollection
             }
         }
 
-        return $this->query->paging($size, $page);
+        return $this->query->setPaging($page, $size);
     }
 
     /**
@@ -142,5 +160,20 @@ abstract class PaggedCollection extends AbstractCollection
     public function getAwarePaginator()
     {
         return $this->query->getAwarePaginator();
+    }
+
+    public function getNextUrl()
+    {
+        return $this->getAwarePaginator()->url($this->getNextPage());
+    }
+
+    public function getPreviousUrl()
+    {
+        return $this->getAwarePaginator()->url($this->getPreviousPage());
+    }
+
+    public function getCurrentUrl()
+    {
+        return $this->getAwarePaginator()->url($this->getPage());
     }
 }

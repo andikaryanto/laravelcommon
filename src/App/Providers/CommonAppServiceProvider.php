@@ -3,20 +3,22 @@
 namespace LaravelCommon\App\Providers;
 
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Routing\Route;
 use Illuminate\Support\ServiceProvider;
 use LaravelCommon\App\Console\Commands\CreateLoggingName;
 use LaravelCommon\App\Console\Commands\CreateScope;
 use LaravelCommon\App\Console\Commands\EnableLoggingName;
 use LaravelCommon\App\Console\Commands\GenerateEntity;
-use LaravelCommon\App\Http\Middleware\CheckScope;
-use LaravelCommon\App\Http\Middleware\CheckToken;
+use LaravelCommon\App\Http\Middleware\CheckScopeMiddleware;
+use LaravelCommon\App\Http\Middleware\CheckTokenMiddleware;
 use LaravelCommon\App\Http\Middleware\ApiResponseMiddleware;
-use LaravelCommon\App\Http\Middleware\ModelUnit;
-use LaravelCommon\App\Http\Middleware\Hydrators\UserHydrator;
-use LaravelCommon\App\Http\Middleware\ResourceValidation;
+use LaravelCommon\App\Http\Middleware\UnitOfWorkMiddleware;
+use LaravelCommon\App\Http\Middleware\Hydrators\UserHydratorMiddleware;
+use LaravelCommon\App\Http\Middleware\ResourceValidationMiddleware;
 use LaravelCommon\System\Database\Schema\Blueprint as SchemaBlueprint;
 use Illuminate\Contracts\Http\Kernel;
+use LaravelCommon\App\Services\IncomingRequestService;
+use LaravelCommon\System\Http\Request;
+use LaravelCommon\Utilities\Database\UnitOfWork as DatabaseUnitOfWork;
 
 class CommonAppServiceProvider extends ServiceProvider
 {
@@ -31,7 +33,10 @@ class CommonAppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->app->singleton(DatabaseUnitOfWork::class, function ($app) {
+            $incomingRequestService = $app->make(IncomingRequestService::class);
+            return new DatabaseUnitOfWork($incomingRequestService);
+        });
     }
 
     /**
@@ -83,11 +88,11 @@ class CommonAppServiceProvider extends ServiceProvider
         $router = $this->app['router'];
 
         $router->aliasMiddleware(ApiResponseMiddleware::NAME, ApiResponseMiddleware::class);
-        $router->aliasMiddleware(CheckToken::NAME, CheckToken::class);
-        $router->aliasMiddleware(CheckScope::NAME, CheckScope::class);
-        $router->aliasMiddleware(ModelUnit::NAME, ModelUnit::class);
-        $router->aliasMiddleware(ResourceValidation::NAME, ResourceValidation::class);
-        $router->aliasMiddleware(UserHydrator::NAME, UserHydrator::class);
+        $router->aliasMiddleware(CheckTokenMiddleware::NAME, CheckTokenMiddleware::class);
+        $router->aliasMiddleware(CheckScopeMiddleware::NAME, CheckScopeMiddleware::class);
+        $router->aliasMiddleware(UnitOfWorkMiddleware::NAME, UnitOfWorkMiddleware::class);
+        $router->aliasMiddleware(ResourceValidationMiddleware::NAME, ResourceValidationMiddleware::class);
+        $router->aliasMiddleware(UserHydratorMiddleware::NAME, UserHydratorMiddleware::class);
 
         // Apply middleware to the 'api' middleware group
     //    $router->middlewareGroup('api', [

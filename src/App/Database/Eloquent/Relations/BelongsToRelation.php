@@ -4,8 +4,10 @@ namespace LaravelCommon\App\Database\Eloquent\Relations;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use LaravelCommon\App\Services\EagerService;
+use Mockery;
 
-class BelongsToRelation
+class BelongsToRelation extends AbstractRelation
 {
     protected Model $ownerModel;
     protected ?Model $ownedModel = null;
@@ -44,11 +46,20 @@ class BelongsToRelation
      */
     public function get(): ?Model
     {
+        $eagerModel = EagerService::getEager($this->ownerModel, $this->name);
+
+        if ($eagerModel) {
+            $this->ownedModel = $eagerModel;
+        }
+
         if (!is_null($this->ownedModel)) {
             return $this->ownedModel;
         }
 
-        return $this->getBelongsTo()->getResults();
+        $result = $this->getRelation()->getResults();
+        $this->ownedModel = $result;
+
+        return $result;
     }
 
     /**
@@ -56,19 +67,35 @@ class BelongsToRelation
      * @param Model $ownedModel
      * @return BelongsToRelation
      */
-    public function set(Model $ownedModel): BelongsToRelation
+    public function set(?Model $ownedModel): BelongsToRelation
     {
-        $this->ownedModel = $ownedModel;
-        $this->getBelongsTo()->associate($ownedModel);
+        if (!is_null(($ownedModel))) {
+            $this->ownedModel = $ownedModel;
+            $this->getRelation()->associate($ownedModel);
+        } else {
+            $onwedPersistedModel = $this->getRelation()->getResults();
+            if (!is_null($onwedPersistedModel)) {
+                $this->getRelation()->dissociate();
+            }
+            $this->ownedModel = null;
+        }
         return $this;
     }
 
     /**
      *
-     * @return BelongsTo
+     * @return mixed
      */
-    private function getBelongsTo(): BelongsTo
+    public function getRelation(): mixed
     {
+        if ($this->isUnitTest()) {
+            $mock = Mockery::mock(BelongsTo::class)->makePartial();
+            $mock->shouldReceive('associate')->andReturn($this->ownedModel);
+            $mock->shouldReceive('getResults')->andReturn(null);
+
+            return $mock;
+        }
+
         return $this->ownerModel->belongsTo(
             $this->related,
             $this->foreignKey,

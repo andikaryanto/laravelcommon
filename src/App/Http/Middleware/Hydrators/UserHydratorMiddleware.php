@@ -2,15 +2,15 @@
 
 namespace LaravelCommon\App\Http\Middleware\Hydrators;
 
-use LaravelCommon\App\Http\Middleware\Hydrator;
+use LaravelCommon\App\Http\Middleware\HydratorMiddleware;
 use LaravelCommon\App\Repositories\GroupuserRepository;
 use LaravelCommon\App\Repositories\UserRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
-class UserHydrator extends Hydrator
+class UserHydratorMiddleware extends HydratorMiddleware
 {
-    public const NAME = 'common.app.middelware.hydrator.user';
+    public const NAME = 'common.app.middelware.hydrator.user-hydrator-middleware';
 
     /**
      * @var GroupuserRepository

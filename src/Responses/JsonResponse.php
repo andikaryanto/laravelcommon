@@ -2,8 +2,8 @@
 
 namespace LaravelCommon\Responses;
 
+use Illuminate\Support\Facades\DB;
 use LaravelCommon\ViewModels\AbstractViewModel;
-use LaravelCommon\ViewModels\PaggedCollection;
 
 class JsonResponse extends BaseResponse
 {
@@ -21,17 +21,21 @@ class JsonResponse extends BaseResponse
      */
     public function buildData()
     {
+        // DB::enableQueryLog();
         if (is_null($this->data)) {
             return null;
         }
 
         $newData = null;
         if ($this->data instanceof AbstractViewModel) {
-            $newData = $this->data->finalArray();
+            $newData = $this->data->loadRelation()->finalArray();
         } else {
             $newData = $this->data;
         }
 
         $this->setData($newData);
+
+        // $quer = DB::getQueryLog();
+        // dd($quer);
     }
 }

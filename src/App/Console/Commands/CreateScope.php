@@ -4,7 +4,7 @@ namespace LaravelCommon\App\Console\Commands;
 
 use Illuminate\Console\Command;
 use LaravelCommon\App\Repositories\ScopeRepository;
-use LaravelCommon\Utilities\Database\ModelUnit;
+use LaravelCommon\Utilities\Database\UnitOfWork;
 
 class CreateScope extends Command
 {
@@ -33,22 +33,22 @@ class CreateScope extends Command
     /**
      * Undocumented variable
      *
-     * @var ModelUnit
+     * @var UnitOfWork
      */
-    protected ModelUnit $modelUnit;
+    protected UnitOfWork $unitOfWork;
 
     /**
      * Create a new command instance.
      *
      * @param ScopeRepository $scopeRepository
-     * @param ModelUnit $modelUnit
+     * @param UnitOfWork $unitOfWork
      */
     public function __construct(
         ScopeRepository $scopeRepository,
-        ModelUnit $modelUnit
+        UnitOfWork $unitOfWork
     ) {
         $this->scopeRepository = $scopeRepository;
-        $this->modelUnit = $modelUnit;
+        $this->unitOfWork = $unitOfWork;
         parent::__construct();
     }
 
@@ -62,8 +62,8 @@ class CreateScope extends Command
         $name = $this->argument('name');
         $scope = $this->scopeRepository->newEntity();
         $scope->setName($name);
-        $this->modelUnit->persist($scope);
-        $this->modelUnit->flush();
+        $this->unitOfWork->persist($scope);
+        $this->unitOfWork->flush();
         $this->info('Scope created');
         return 0;
     }

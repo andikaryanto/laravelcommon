@@ -5,10 +5,8 @@ namespace LaravelCommon\App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use LaravelCommon\App\Queries\UserQuery;
-use LaravelCommon\App\Repositories\UserRepository;
 use LaravelCommon\App\ViewModels\UserCollection;
 use LaravelCommon\App\ViewModels\UserViewModel;
-use LaravelCommon\Responses\JsonResponse;
 use LaravelCommon\Responses\PagedJsonResponse;
 use LaravelCommon\Responses\SuccessResponse;
 

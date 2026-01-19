@@ -3,20 +3,16 @@
 namespace LaravelCommon\App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use LaravelCommon\App\Models\Groupuser\ScopeMapping as GroupuserScopeMapping;
-use LaravelCommon\App\Models\User\ScopeMapping;
 
-class Scope extends Model
+class Scope extends BaseModel
 {
     use HasFactory;
-    use TraitModel;
-
+    
     /**
      *
-     * @return string
+     * @return ?string
      */
-    public function getName(): string
+    public function getName(): ?string
     {
         return $this->name;
     }

@@ -5,32 +5,22 @@ namespace LaravelCommon\App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use LaravelCommon\App\Database\Eloquent\Relations\BelongsToManyRelation;
 use LaravelCommon\App\Database\Eloquent\Relations\BelongsToRelation;
 
 // use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends AuthenticableBaseModel
 {
     // use HasApiTokens;
     use HasFactory;
     use Notifiable;
-    use TraitModel;
 
-    protected bool $is_active = true;
-    protected bool $is_deleted = false;
-
-    protected BelongsToManyRelation $scopes;
-    protected BelongsToRelation $groupuser;
-
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $this->scopes = new BelongsToManyRelation($this, Scope::class, 'user_scopes');
-        $this->groupuser = new BelongsToRelation($this, Groupuser::class, 'groupuser_id');
-    }
+    protected $attributes = [
+        'is_active' => true,
+        'is_deleted' => false
+    ];
 
     /**
      * The attributes that are mass assignable.
@@ -60,15 +50,31 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'password_changed_at' => 'datetime'
     ];
+
+    protected BelongsToManyRelation $scopes;
+    protected BelongsToRelation $groupuser;
+    protected BelongsToRelation $branch;
+
+    public function __construct(array $attributes = [], bool $skipRelations = false)
+    {
+        if (!$skipRelations) {
+            $this->scopes = new BelongsToManyRelation($this, Scope::class, 'user_scopes');
+            $this->groupuser = new BelongsToRelation($this, Groupuser::class, 'groupuser_id');
+            $this->branch = new BelongsToRelation($this, Branch::class, 'branch_id');
+        }
+
+        parent::__construct($attributes);
+    }
 
     /**
      *
-     * @return BelongsToManyRelation
+     * @return Collection
      */
     public function getScopes()
     {
-        return $this->scopes;
+        return $this->scopes->getIterator();
     }
 
     /**
@@ -196,7 +202,7 @@ class User extends Authenticatable
      * @param Groupuser $groupuser
      * @return $this
      */
-    public function setGroupuser(Groupuser $groupuser): User
+    public function setGroupuser(?Groupuser $groupuser): User
     {
         $this->groupuser->set($groupuser);
         return $this;
@@ -233,12 +239,52 @@ class User extends Authenticatable
 
     /**
      *
-     * @param Carbon $deleted_at
+     * @param ?Carbon $deleted_at
      * @return Token
      */
-    public function setDeletedAt(Carbon $deletedAt): User
+    public function setDeletedAt(?Carbon $deletedAt): User
     {
         $this->deleted_at = $deletedAt;
+        return $this;
+    }
+
+    /**
+     * Get the value of password_changed_at
+     */
+    public function getPasswordChangedAt(): Carbon
+    {
+        return $this->password_changed_at;
+    }
+
+    /**
+     * Set the value of password_changed_at
+     *
+     * @return  self
+     */
+    public function setPasswordChangedAt(Carbon $passwordChangedAt)
+    {
+        $this->password_changed_at = $passwordChangedAt;
+
+        return $this;
+    }
+
+    /**
+     *
+     * @return ?Branch
+     */
+    public function getBranch(): ?Branch
+    {
+        return $this->branch->get();
+    }
+
+    /**
+     *
+     * @param Branch $branch
+     * @return $this
+     */
+    public function setBranch(?Branch $branch = null): User
+    {
+        $this->branch->set($branch);
         return $this;
     }
 }

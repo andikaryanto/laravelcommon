@@ -35,10 +35,10 @@ class AuthController extends Controller
      */
     public function generateToken(Request $request)
     {
-        $username = $request->username;
+        $email = $request->email;
         $password = $request->password;
 
-        $userToken = $this->userService->generateToken($username, $password);
+        $userToken = $this->userService->generateToken($email, $password);
         if (empty($userToken)) {
             return new BadRequestResponse('User not found', [], null);
         }

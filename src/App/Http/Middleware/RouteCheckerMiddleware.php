@@ -9,7 +9,7 @@ use LaravelCommon\App\Consts\ResponseConst;
 use LaravelCommon\Responses\NotAllowedResponse;
 use LaravelCommon\Responses\SuccessResponse;
 
-class RouteChecker
+class RouteCheckerMiddleware
 {
     /**
      * Handle an incoming request.

@@ -32,6 +32,7 @@ class LoggingConfigViewModel extends AbstractViewModel
     public function toArray()
     {
         return [
+            'id' => $this->model->getId(),
             'name' => $this->model->getName(),
             "is_enabled" => (bool)$this->model->getIsEnabled()
         ];

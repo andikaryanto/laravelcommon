@@ -11,9 +11,9 @@ use LaravelCommon\Responses\BadRequestResponse;
 use LaravelCommon\Exceptions\ModelException;
 use LaravelCommon\Exceptions\ValidationException;
 
-class ResourceValidation
+class ResourceValidationMiddleware
 {
-    public const NAME = 'common.app.middleware.resource-validation';
+    public const NAME = 'common.app.middleware.resource-validation-middleware';
 
     /**
      * Handle an incoming request.

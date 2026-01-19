@@ -25,9 +25,7 @@ class Jwt
         $payload =
             [
                 "user_id" => $user->getId(),
-                "user_name" => $user->getUsername(),
-                "password" => $user->getPassword(),
-                "expired_at" => $jwtExpiredDate->format('YmdHis')
+                "created_at" => Carbon::now()->format('Y-m-d H:i:s')
             ];
 
         $token = JWTJWT::encode($payload, env('APP_KEY'), 'HS256');

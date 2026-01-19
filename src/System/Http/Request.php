@@ -5,7 +5,8 @@ namespace LaravelCommon\System\Http;
 use LaravelCommon\App\Repositories\User\TokenRepository;
 use Illuminate\Http\Request as HttpRequest;
 use LaravelCommon\App\Models\User\Token;
-use LaravelCommon\App\Http\Middleware\Hydrator;
+use LaravelCommon\App\Http\Middleware\HydratorMiddleware;
+use LaravelCommon\App\Models\Branch;
 
 class Request extends HttpRequest
 {
@@ -24,9 +25,9 @@ class Request extends HttpRequest
     /**
      * Undocumented variable
      *
-     * @var Hydrator
+     * @var HydratorMiddleware
      */
-    protected Hydrator $hydrator;
+    protected HydratorMiddleware $hydrator;
 
     /**
      *
@@ -34,6 +35,12 @@ class Request extends HttpRequest
      * @var mixed
      */
     protected $resource;
+    /**
+     *
+     *
+     * @var mixed
+     */
+    protected $prevousResource;
 
     /**
      * Undocumented function
@@ -68,6 +75,11 @@ class Request extends HttpRequest
         return $this;
     }
 
+    public function getBranch(): ?Branch
+    {
+        return $this->userToken->getUser()->getBranch();
+    }
+
     /**
      * Undocumented function
      *
@@ -79,12 +91,35 @@ class Request extends HttpRequest
     }
 
     /**
+     * Undocumented function
+     *
+     * @param mixed $entity
+     * @return Request
+     */
+    public function setPreviousResource($entity)
+    {
+        $this->prevousResource = $entity;
+        return $this;
+    }
+
+    /**
+     * Undocumented function
+     *
+     * @param mixed $entity
+     * @return Request
+     */
+    public function getPreviousResource()
+    {
+        return $this->prevousResource;
+    }
+
+    /**
      * Set hydrator
      *
-     * @param Hydrator $hydrator
+     * @param HydratorMiddleware $hydrator
      * @return self
      */
-    public function setHydrator(Hydrator $hydrator)
+    public function setHydratorMiddleware(HydratorMiddleware $hydrator)
     {
         $this->hydrator = $hydrator;
         return $this;
@@ -93,9 +128,9 @@ class Request extends HttpRequest
     /**
      * Get hydrator
      *
-     * @return Hydrator
+     * @return HydratorMiddleware
      */
-    public function getHydrator()
+    public function getHydratorMiddleware()
     {
         return $this->hydrator;
     }

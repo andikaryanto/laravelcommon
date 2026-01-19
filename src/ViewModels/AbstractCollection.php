@@ -20,10 +20,27 @@ abstract class AbstractCollection
         $this->request = $request;
     }
 
+    public function getQuery(): Query
+    {
+        return $this->query;
+    }
+
+    public function loadWith(): array
+    {
+        return [];
+    }
+
+    public function loadRelation()
+    {
+        if (!empty($this->loadWith())) {
+            $this->collection->load($this->loadWith());
+        }
+    }
+
     /**
      * Eloquent to View Model
      */
-    abstract public function shape(Model $model);
+    abstract public function shape(Model $model): ?AbstractViewModel;
 
     /**
      * proceed shaping to view model
@@ -31,13 +48,17 @@ abstract class AbstractCollection
     public function proceed()
     {
         $this->collection = $this->query->getIterator();
+        $this->loadRelation();
         foreach ($this->collection as $item) {
-            $this->shape($item);
+            $viewModel = $this->shape($item);
+            if ($viewModel instanceof AbstractViewModel) {
+                $this->addItem($viewModel);
+            }
         }
         return $this;
     }
 
-    public function finalProcceed()
+    public function finalArray()
     {
         return $this->proceed()->getElements();
     }

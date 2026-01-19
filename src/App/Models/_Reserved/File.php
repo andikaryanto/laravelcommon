@@ -16,6 +16,13 @@ class File
      *
      * @var string
      */
+    protected string $originalName;
+
+    /**
+     * Undocumented variable
+     *
+     * @var string
+     */
     protected string $extension;
 
     /**
@@ -124,6 +131,30 @@ class File
     public function setSize($size): File
     {
         $this->size = $size;
+
+        return $this;
+    }
+
+/*
+     * Get undocumented variable
+     *
+     * @return  string
+     */
+    public function getOriginalName()
+    {
+        return $this->originalName;
+    }
+
+    /**
+     * Set undocumented variable
+     *
+     * @param  string  $originalName  Undocumented variable
+     *
+     * @return  self
+     */
+    public function setOriginalName(string $originalName)
+    {
+        $this->originalName = $originalName;
 
         return $this;
     }

@@ -15,7 +15,7 @@ use LaravelCommon\Responses\PagedJsonResponse;
 
 class ApiResponseMiddleware
 {
-    public const NAME = 'common.app.middleware.api-response';
+    public const NAME = 'common.app.middleware.api-response-middleware';
 
     /**
      *

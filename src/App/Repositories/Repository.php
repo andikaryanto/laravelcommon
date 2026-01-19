@@ -69,22 +69,6 @@ class Repository
     /**
      * @inheritDoc
      */
-    public function collectionClass(): string
-    {
-        throw new Exception('"collectionClass" needs to be overrided in your repository classes');
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function viewModelClass(): string
-    {
-        throw new Exception('"viewModelClass" needs to be overrided in your repository classes');
-    }
-
-    /**
-     * @inheritDoc
-     */
     public function validateEntity(Model $model): void
     {
     }

@@ -5,36 +5,34 @@ namespace LaravelCommon\App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use LaravelCommon\App\Database\Eloquent\Relations\BelongsToRelation;
-use LaravelCommon\App\Models\TraitModel;
+use LaravelCommon\App\Models\BaseModel;
 use LaravelCommon\App\Models\User;
 
-class Token extends Model
+class Token extends BaseModel
 {
     use HasFactory;
-    use TraitModel;
 
 
     protected $table = 'user_tokens';
 
     protected $casts = [
-        'expired_at' => 'datetime'
+        'expired_at' => 'datetime',
     ];
 
     protected BelongsToRelation $user;
 
     public function __construct(array $attributes = [])
     {
-        parent::__construct($attributes);
         $this->user = new BelongsToRelation($this, User::class, 'user_id');
+        parent::__construct($attributes);
     }
 
     /**
      *
-     * @return
+     * @return ?User
      */
-    public function getUser()
+    public function getUser(): ?User
     {
         return $this->user->get();
     }
