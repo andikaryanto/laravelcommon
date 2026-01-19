@@ -178,12 +178,19 @@ class Query extends Builder
                 $newBuilder = new static($this->connection, $this->grammar, $this->getProcessor());
 
                 $tableAndId = $this->table . '.' . $this->model->getKeyName();
-                $ids = $this->distinct()->pluck($tableAndId)->toArray();
-                $this->total = count($ids);
+                $countQuery = clone $this;
+                $countQuery->orders = [];
+                $this->total = (int) $countQuery
+                    ->select(DB::raw("COUNT(DISTINCT $tableAndId) as count"))
+                    ->value('count');
 
-                $lastSizedIds = $ids;
-                if (!empty($this->page) && !empty($this->size) && count($ids) > 0) {
-                    $lastSizedIds = array_slice($ids, $this->size * ($this->page - 1), $this->size);
+                $distinctIdQuery = clone $this;
+                $distinctIdQuery
+                    ->select($tableAndId)
+                    ->distinct();
+                if (!empty($this->page) && !empty($this->size)) {
+                    $distinctIdQuery->take($this->size)
+                        ->offset(($this->page - 1) * $this->size);
                 }
 
                 $newBuilder->fromSelect();
@@ -200,9 +207,14 @@ class Query extends Builder
                     $newBuilder->groups = $this->groups;
                 }
 
-                $newBuilder->whereIdIn($lastSizedIds);
+                if ($this->orders) {
+                    $lastSizedIds = $distinctIdQuery->pluck($tableAndId)->toArray();
+                    $newBuilder->whereIdIn($lastSizedIds);
+                } else {
+                    $newBuilder->whereIn($tableAndId, $distinctIdQuery);
+                }
 
-                if ($this->orders && count($lastSizedIds) > 0) {
+                if ($this->orders && !empty($lastSizedIds)) {
                     // using WHEN Statement to order the data to suppor sqlite
                     foreach ($lastSizedIds as $index => $id) {
                         $table = $this->getTable();
@@ -237,22 +249,29 @@ class Query extends Builder
                     $clonedDistinctQuery->take($this->size)
                         ->offset(($this->page - 1) * $this->size);
                 }
-                $lastSizedIds = $clonedDistinctQuery->pluck($tableAndId)->toArray();
+                $lastSizedIds = null;
+                if ($this->orders) {
+                    $lastSizedIds = $clonedDistinctQuery->pluck($tableAndId)->toArray();
+                }
 
                 if ($this->doCountTotal) {
                     // TODO: in the future we might not need this, it gets the query prety slow if we dont fiilter by range date
                     $clonedCountQuery->orders = [];
-                    $this->total = $clonedCountQuery
+                    $this->total = (int) $clonedCountQuery
                         ->select(DB::Raw("COUNT(DISTINCT $tableAndId) as count"))
-                        ->get()[0]->count;
+                        ->value('count');
                     // END TODO
                 }
 
                 $newBuilder->fromSelect()
-                    ->distinct()
-                    ->whereIdIn($lastSizedIds);
+                    ->distinct();
+                if ($this->orders) {
+                    $newBuilder->whereIdIn($lastSizedIds);
+                } else {
+                    $newBuilder->whereIn($tableAndId, $clonedDistinctQuery);
+                }
 
-                if ($this->orders && count($lastSizedIds) > 0) {
+                if ($this->orders && !empty($lastSizedIds)) {
                     // using WHEN Statement to order the data to suppor sqlite
                     foreach ($lastSizedIds as $index => $id) {
                         $orderByCases[] = "WHEN id = $id THEN $index";
