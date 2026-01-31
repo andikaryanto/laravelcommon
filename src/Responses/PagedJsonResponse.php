@@ -39,7 +39,7 @@ class PagedJsonResponse extends CollectionResponse
     public function buildData()
     {
         // DB::enableQueryLog();
-        $this->getQuery()->setDoCountTotal(true);
+        $this->getQuery(); 
         $this->collection->filterAndSortFromRequest();
 
         $data = $this->collection->finalArray();
@@ -52,7 +52,7 @@ class PagedJsonResponse extends CollectionResponse
                     // TODO: in the future, we might not need this, it's collected using COUNT(id) of table
                     // which make slow return from database when data grows
                     // what will be affected is pagination in the FE component, because it is used there
-                    'total_data' => $this->collection->getTotalRecord(),
+                    // 'total_data' => $this->collection->getTotalRecord(),
                     // END TODO
                     'is_last_page' => count($data) < $this->collection->getSize(),
                 ]

@@ -17,6 +17,7 @@ class Query extends Builder
     protected string $table;
     protected bool $asRaw = false;
     protected array $addedSelect = [];
+    protected static array $columnsCache = [];
     protected ?LengthAwarePaginator $lengthAwarePaginator = null;
     protected ?int $page = null;
     protected ?int $size = null;
@@ -77,7 +78,12 @@ class Query extends Builder
 
     protected function getSelectColumns()
     {
-        $columns = Schema::getColumnListing($this->model->getTable());
+        $table = $this->model->getTable();
+        if (!isset(self::$columnsCache[$table])) {
+            self::$columnsCache[$table] = Schema::getColumnListing($table);
+        }
+
+        $columns = self::$columnsCache[$table];
         $columnsWithAlias = [];
         foreach ($columns as $column) {
             $columnsWithAlias[] = $this->table . '.' . $column; // . ' as ' .  $this->table . '_' . $column;
@@ -232,17 +238,7 @@ class Query extends Builder
                     $newBuilder->whereIdIn($lastSizedIds);
 
                     if (!empty($lastSizedIds)) {
-                        // using WHEN Statement to order the data to suppor sqlite
-                        foreach ($lastSizedIds as $index => $id) {
-                            $table = $this->getTable();
-                            $orderByCases[] = "WHEN $table.id = $id THEN $index";
-                        }
-
-                        $orderByCaseSql = 'CASE ' . implode(' ', $orderByCases) . ' END';
-                        $newBuilder->orderByRaw($orderByCaseSql);
-
-                        // TODO: SQLITE did not support this, we might need consider other way
-                        // $newBuilder->orderByRaw('FIELD(' . $tableAndId . ', ' . implode(',', $lastSizedIds) . ')');
+                        $this->orderByIds($newBuilder, $tableAndId, $lastSizedIds);
                     }
                 } else {
                     $newBuilder->whereIn($tableAndId, $distinctIdQuery);
@@ -308,16 +304,7 @@ class Query extends Builder
                     $newBuilder->whereIdIn($lastSizedIds);
 
                     if (!empty($lastSizedIds)) {
-                        // using WHEN Statement to order the data to suppor sqlite
-                        foreach ($lastSizedIds as $index => $id) {
-                            $orderByCases[] = "WHEN id = $id THEN $index";
-                        }
-
-                        $orderByCaseSql = 'CASE ' . implode(' ', $orderByCases) . ' END';
-                        $newBuilder->orderByRaw($orderByCaseSql);
-
-                        // TODO: SQLITE did not support this, we might need consider other way
-                        // $newBuilder->orderByRaw('FIELD(' . $tableAndId . ', ' . implode(',', $lastSizedIds) . ')');
+                        $this->orderByIds($newBuilder, $tableAndId, $lastSizedIds);
                     }
                 } else {
                     $newBuilder->whereIn($tableAndId, $clonedDistinctQuery);
@@ -534,6 +521,27 @@ class Query extends Builder
         }
 
         return implode(', ', $segments);
+    }
+
+    protected function orderByIds(Builder $builder, string $tableAndId, array $ids): void
+    {
+        if (empty($ids)) {
+            return;
+        }
+
+        $driver = $this->connection->getDriverName();
+        if ($driver === 'mysql' || $driver === 'mariadb') {
+            $builder->orderByRaw('FIELD(' . $tableAndId . ', ' . implode(',', $ids) . ')');
+            return;
+        }
+
+        // using CASE WHEN for sqlite/others
+        $orderByCases = [];
+        foreach ($ids as $index => $id) {
+            $orderByCases[] = "WHEN $tableAndId = $id THEN $index";
+        }
+        $orderByCaseSql = 'CASE ' . implode(' ', $orderByCases) . ' END';
+        $builder->orderByRaw($orderByCaseSql);
     }
 
     /**
