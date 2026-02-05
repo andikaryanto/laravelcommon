@@ -3,10 +3,9 @@
 namespace LaravelCommon\System\Queue;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Spatie\Multitenancy\Jobs\TenantAware;
 use Spatie\Multitenancy\Models\Tenant;
 
-abstract class OptionalTenantShouldQueue implements ShouldQueue, TenantAware
+abstract class OptionalTenantShouldQueue implements ShouldQueue
 {
     protected ?int $tenantId = null;
 
