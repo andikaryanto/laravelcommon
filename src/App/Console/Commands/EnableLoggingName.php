@@ -30,23 +30,13 @@ class EnableLoggingName extends Command
 
 
     /**
-     *
-     * @param LoggingConfigQuery $loggingConfigQuery
-     */
-    public function __construct(
-        LoggingConfigQuery $loggingConfigQuery,
-    ) {
-        $this->loggingConfigQuery = $loggingConfigQuery;
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return int
      */
-    public function handle()
+    public function handle(LoggingConfigQuery $loggingConfigQuery)
     {
+        $this->loggingConfigQuery = $loggingConfigQuery;
         $this->info("Command is running...");
 
         $name = $this->argument('name');
