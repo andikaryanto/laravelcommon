@@ -102,9 +102,8 @@ class FileService
         $year = $dateTime->format('Y');
         $month = $dateTime->format('m');
 
-        // $path = 'public/' . $path;
-        $path .= "$year/$month/";
-        $publiPath = $this->ensureTenantPublicPath('public/' . $path);
+        $path .= "$year/$month";
+        $publiPath = $this->ensureTenantPublicPath($path);
 
         if ($this->hashedName) {
             $path = $uploadedFile->store($publiPath);
