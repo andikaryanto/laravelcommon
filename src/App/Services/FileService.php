@@ -7,9 +7,12 @@ use Exception;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use LaravelCommon\App\Models\_Reserved\File;
+use LaravelCommon\App\Trait\TenantPathCreator;
 
 class FileService
 {
+    use TenantPathCreator;
+
     /**
      * Undocumented variable
      *
@@ -99,9 +102,8 @@ class FileService
         $year = $dateTime->format('Y');
         $month = $dateTime->format('m');
 
-        // $path = 'public/' . $path;
         $path .= "$year/$month";
-        $publiPath = 'public/' . $path;
+        $publiPath = $this->ensureTenantPublicPath($path);
 
         if ($this->hashedName) {
             $path = $uploadedFile->store($publiPath);

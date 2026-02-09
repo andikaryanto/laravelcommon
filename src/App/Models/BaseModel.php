@@ -9,10 +9,12 @@ use LaravelCommon\App\Database\Eloquent\Relations\HasManyRelation;
 use LaravelCommon\App\Database\Eloquent\Relations\HasOneRelation;
 use ReflectionClass;
 use ReflectionProperty;
+use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 
 class BaseModel extends Model
 {
     use AuditableModel;
+    use UsesTenantConnection;
 
     public function __construct(array $attributes = [])
     {
@@ -26,9 +28,9 @@ class BaseModel extends Model
                     $property->getType()->getName() == HasOneRelation::class ||
                     $property->getType()->getName() == HasManyRelation::class ||
                     $property->getType()->getName() == BelongsToManyRelation::class
-                ) 
+                )
             ) {
-                $propName = $property->getName();                
+                $propName = $property->getName();
                 $this->$propName->setName($propName);
             }
         }
