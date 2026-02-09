@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use LaravelCommon\App\Database\Eloquent\Relations\BelongsToManyRelation;
 use LaravelCommon\App\Database\Eloquent\Relations\BelongsToRelation;
+use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 
 // use Laravel\Sanctum\HasApiTokens;
 
@@ -16,6 +17,7 @@ class User extends AuthenticableBaseModel
     // use HasApiTokens;
     use HasFactory;
     use Notifiable;
+    use UsesTenantConnection;
 
     protected $attributes = [
         'is_active' => true,
