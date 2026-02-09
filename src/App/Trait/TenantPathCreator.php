@@ -25,7 +25,7 @@ trait TenantPathCreator
     public function ensureTenantPublicPath(string $publicPath): string
     {
         $tenantPath = $this->buildTenantPath() ?? '';
-        $fullPath = $publicPath . $tenantPath;
+        $fullPath =  'public/' . $tenantPath . $publicPath . '/';
 
         if (!Storage::exists($fullPath)) {
             Storage::makeDirectory($fullPath);
