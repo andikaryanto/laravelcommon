@@ -49,11 +49,9 @@ class PagedJsonResponse extends CollectionResponse
                 '_paging' => [
                     'page' =>  $this->collection->getPage(),
                     'limit' => $this->collection->getSize(),
-                    // TODO: in the future, we might not need this, it's collected using COUNT(id) of table
-                    // which make slow return from database when data grows
-                    // what will be affected is pagination in the FE component, because it is used there
-                    // 'total_data' => $this->collection->getTotalRecord(),
-                    // END TODO
+                    // To Support FE now that uses total_data, we do not count total data anymore, so it's 0
+                    // so FE is not breaking any thing
+                    'total_data' => 0,
                     'is_last_page' => count($data) < $this->collection->getSize(),
                 ]
             ];
