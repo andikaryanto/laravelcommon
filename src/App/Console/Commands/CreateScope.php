@@ -38,27 +38,14 @@ class CreateScope extends Command
     protected UnitOfWork $unitOfWork;
 
     /**
-     * Create a new command instance.
-     *
-     * @param ScopeRepository $scopeRepository
-     * @param UnitOfWork $unitOfWork
-     */
-    public function __construct(
-        ScopeRepository $scopeRepository,
-        UnitOfWork $unitOfWork
-    ) {
-        $this->scopeRepository = $scopeRepository;
-        $this->unitOfWork = $unitOfWork;
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return int
      */
-    public function handle()
+    public function handle(ScopeRepository $scopeRepository, UnitOfWork $unitOfWork)
     {
+        $this->scopeRepository = $scopeRepository;
+        $this->unitOfWork = $unitOfWork;
         $name = $this->argument('name');
         $scope = $this->scopeRepository->newEntity();
         $scope->setName($name);

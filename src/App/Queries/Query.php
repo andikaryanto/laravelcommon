@@ -48,11 +48,20 @@ class Query extends Builder
      * @return void
      */
     public function __construct(
-        ConnectionInterface $connection = null,
-        Grammar $grammar = null,
-        Processor $processor = null
+        ?ConnectionInterface $connection = null,
+        ?Grammar $grammar = null,
+        ?Processor $processor = null
     ) {
-        $connection = DB::connection();
+        if (config('multitenancy.enabled', true) && app()->bound('currentTenant')) {
+            $connection = DB::connection('tenant');
+            $currentTenant = app('currentTenant');
+            if (!is_null($currentTenant) && isset($currentTenant->database)) {
+                $connection->setDatabaseName($currentTenant->database);
+            }
+        } else {
+            $connection = DB::connection();
+        }
+
         $grammar = $connection->query()->getGrammar();
         parent::__construct($connection, $grammar);
 
@@ -80,6 +89,10 @@ class Query extends Builder
         $columnsWithAlias = [];
         foreach ($columns as $column) {
             $columnsWithAlias[] = $this->table . '.' . $column; // . ' as ' .  $this->table . '_' . $column;
+        }
+
+        if (empty($columnsWithAlias)) {
+            $columnsWithAlias[] = $this->table . '.*';
         }
 
         return $columnsWithAlias;
