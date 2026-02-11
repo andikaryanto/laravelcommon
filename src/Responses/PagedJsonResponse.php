@@ -23,15 +23,6 @@ class PagedJsonResponse extends CollectionResponse
     }
 
     /**
-     *
-     * @return Query|null
-     */
-    public function getQuery(): ?Query
-    {
-        return $this->collection->getQuery();
-    }
-
-    /**
      * getPagedCollection
      *
      * @return PagedCollection
@@ -39,7 +30,6 @@ class PagedJsonResponse extends CollectionResponse
     public function buildData()
     {
         // DB::enableQueryLog();
-        $this->getQuery()->setDoCountTotal(true);
         $this->collection->filterAndSortFromRequest();
 
         $data = $this->collection->finalArray();

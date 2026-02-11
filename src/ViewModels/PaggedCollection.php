@@ -19,6 +19,24 @@ abstract class PaggedCollection extends AbstractCollection
         parent::__construct($query, $request);
         $this->disableKeywordSearch = $disableKeywordSearch;
         $this->disableDefaultOrder = $disableDefaultOrder;
+    }    
+
+    protected function shouldEmbed(string $resource): bool
+    {
+        if (is_null($this->request)) {
+            return false;
+        }
+
+        $embed = $this->request->embed ?? [];
+        if (is_string($embed)) {
+            $embed = array_map('trim', explode(',', $embed));
+        }
+
+        if (!is_array($embed)) {
+            return false;
+        }
+
+        return in_array($resource, $embed, true);
     }
 
 

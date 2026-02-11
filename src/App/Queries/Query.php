@@ -9,7 +9,6 @@ use Illuminate\Database\Query\Grammars\Grammar;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 class Query extends Builder
 {
@@ -22,7 +21,7 @@ class Query extends Builder
     protected ?int $size = null;
     protected ?int $total = 0;
     protected bool $isHaveCount = false;
-    protected bool $doCountTotal = false;
+    protected static array $selectColumnsCache = [];
 
 
     // NOTE: we used to do have issue on grammar on laravel 9.xx
@@ -71,12 +70,6 @@ class Query extends Builder
         $this->fromSelect();
     }
 
-    public function setDoCountTotal(bool $doCountTotal): Query
-    {
-        $this->doCountTotal = $doCountTotal;
-        return $this;
-    }
-
     public function setIsHaveCount(bool $isHaveCount)
     {
         $this->isHaveCount = $isHaveCount;
@@ -85,7 +78,15 @@ class Query extends Builder
 
     protected function getSelectColumns()
     {
-        $columns = Schema::getColumnListing($this->model->getTable());
+        $connectionName = $this->connection->getName();
+        $databaseName = $this->connection->getDatabaseName() ?? '';
+        $cacheKey = $connectionName . ':' . $databaseName . ':' . $this->table;
+
+        if (isset(static::$selectColumnsCache[$cacheKey])) {
+            return static::$selectColumnsCache[$cacheKey];
+        }
+
+        $columns = $this->connection->getSchemaBuilder()->getColumnListing($this->model->getTable());
         $columnsWithAlias = [];
         foreach ($columns as $column) {
             $columnsWithAlias[] = $this->table . '.' . $column; // . ' as ' .  $this->table . '_' . $column;
@@ -95,6 +96,7 @@ class Query extends Builder
             $columnsWithAlias[] = $this->table . '.*';
         }
 
+        static::$selectColumnsCache[$cacheKey] = $columnsWithAlias;
         return $columnsWithAlias;
     }
 
@@ -191,12 +193,19 @@ class Query extends Builder
                 $newBuilder = new static($this->connection, $this->grammar, $this->getProcessor());
 
                 $tableAndId = $this->table . '.' . $this->model->getKeyName();
-                $ids = $this->distinct()->pluck($tableAndId)->toArray();
-                $this->total = count($ids);
+                $distinctIdsQuery = $this->buildDistinctIdsQuery($tableAndId, false);
 
-                $lastSizedIds = $ids;
-                if (!empty($this->page) && !empty($this->size) && count($ids) > 0) {
-                    $lastSizedIds = array_slice($ids, $this->size * ($this->page - 1), $this->size);
+                $this->total = DB::query()
+                    ->fromSub($distinctIdsQuery, 'distinct_ids')
+                    ->count();
+
+                $lastSizedIds = [];
+                if (!empty($this->page) && !empty($this->size)) {
+                    $distinctIdsQuery->take($this->size)
+                        ->offset(($this->page - 1) * $this->size);
+                    $lastSizedIds = $distinctIdsQuery->pluck($tableAndId)->toArray();
+                } else {
+                    $lastSizedIds = $distinctIdsQuery->pluck($tableAndId)->toArray();
                 }
 
                 $newBuilder->fromSelect();
@@ -216,21 +225,20 @@ class Query extends Builder
                 $newBuilder->whereIdIn($lastSizedIds);
 
                 if ($this->orders && count($lastSizedIds) > 0) {
-                    // using WHEN Statement to order the data to suppor sqlite
-                    foreach ($lastSizedIds as $index => $id) {
-                        $table = $this->getTable();
-                        $orderByCases[] = "WHEN $table.id = $id THEN $index";
-                    }
-
-                    $orderByCaseSql = 'CASE ' . implode(' ', $orderByCases) . ' END';
-                    $newBuilder->orderByRaw($orderByCaseSql);
-
-                    // TODO: SQLITE did not support this, we might need consider other way
-                    // $newBuilder->orderByRaw('FIELD(' . $tableAndId . ', ' . implode(',', $lastSizedIds) . ')');
+                    $this->orderByIdsBySequence($newBuilder, $lastSizedIds, $tableAndId);
                 }
 
                 if (!empty($this->page) && !empty($this->size)) {
-                    $newBuilder->paging(1, $this->size, $this->getSelectColumns());
+                    $items = count($lastSizedIds) > 0
+                        ? $newBuilder->get($this->getSelectColumns())
+                        : collect();
+                    $newBuilder->lengthAwarePaginator = new LengthAwarePaginator(
+                        $items,
+                        $this->total,
+                        $this->size,
+                        1,
+                        ['path' => request()->url(), 'query' => request()->query()]
+                    );
                 }
 
                 $this->lengthAwarePaginator = $newBuilder->lengthAwarePaginator;
@@ -239,47 +247,33 @@ class Query extends Builder
                 $newBuilder = new static($this->connection, $this->grammar, $this->getProcessor());
 
                 $tableAndId = $this->table . '.' . $this->model->getKeyName();
-                $clonedDistinctQuery = clone $this;
-                $clonedCountQuery = clone $this;
-
-                $clonedDistinctQuery
-                    ->select($tableAndId)
-                    ->distinct();
+                $distinctIdsQuery = $this->buildDistinctIdsQuery($tableAndId);
 
                 if (!empty($this->page) && !empty($this->size)) {
-                    $clonedDistinctQuery->take($this->size)
+                    $distinctIdsQuery->take($this->size)
                         ->offset(($this->page - 1) * $this->size);
                 }
-                $lastSizedIds = $clonedDistinctQuery->pluck($tableAndId)->toArray();
-
-                if ($this->doCountTotal) {
-                    // TODO: in the future we might not need this, it gets the query prety slow if we dont fiilter by range date
-                    $clonedCountQuery->orders = [];
-                    $this->total = $clonedCountQuery
-                        ->select(DB::Raw("COUNT(DISTINCT $tableAndId) as count"))
-                        ->get()[0]->count;
-                    // END TODO
-                }
+                $lastSizedIds = $distinctIdsQuery->pluck($tableAndId)->toArray();
 
                 $newBuilder->fromSelect()
                     ->distinct()
                     ->whereIdIn($lastSizedIds);
 
                 if ($this->orders && count($lastSizedIds) > 0) {
-                    // using WHEN Statement to order the data to suppor sqlite
-                    foreach ($lastSizedIds as $index => $id) {
-                        $orderByCases[] = "WHEN id = $id THEN $index";
-                    }
-
-                    $orderByCaseSql = 'CASE ' . implode(' ', $orderByCases) . ' END';
-                    $newBuilder->orderByRaw($orderByCaseSql);
-
-                    // TODO: SQLITE did not support this, we might need consider other way
-                    // $newBuilder->orderByRaw('FIELD(' . $tableAndId . ', ' . implode(',', $lastSizedIds) . ')');
+                    $this->orderByIdsBySequence($newBuilder, $lastSizedIds, $tableAndId);
                 }
 
                 if (!empty($this->page) && !empty($this->size)) {
-                    $newBuilder->paging(1, $this->size, $this->getSelectColumns());
+                    $items = count($lastSizedIds) > 0
+                        ? $newBuilder->get($this->getSelectColumns())
+                        : collect();
+                    $newBuilder->lengthAwarePaginator = new LengthAwarePaginator(
+                        $items,
+                        count($lastSizedIds),
+                        $this->size,
+                        1,
+                        ['path' => request()->url(), 'query' => request()->query()]
+                    );
                 }
 
                 $this->lengthAwarePaginator = $newBuilder->lengthAwarePaginator;
@@ -314,6 +308,61 @@ class Query extends Builder
         }
 
         return $this;
+    }
+
+    protected function buildDistinctIdsQuery(string $qualifiedIdColumn, bool $keepOrders = true): Builder
+    {
+        $idsQuery = $this->connection->query()->from($this->from);
+        $idsQuery->joins = $this->joins;
+        $idsQuery->wheres = $this->wheres;
+        $idsQuery->groups = $this->groups;
+        $idsQuery->havings = $this->havings;
+        $idsQuery->unions = $this->unions;
+        $idsQuery->unionLimit = $this->unionLimit;
+        $idsQuery->unionOffset = $this->unionOffset;
+        $idsQuery->unionOrders = $this->unionOrders;
+        $idsQuery->distinct()->select($qualifiedIdColumn);
+
+        if ($keepOrders) {
+            $idsQuery->orders = $this->orders;
+        }
+
+        $idsQuery->bindings['join'] = $this->bindings['join'] ?? [];
+        $idsQuery->bindings['where'] = $this->bindings['where'] ?? [];
+        $idsQuery->bindings['groupBy'] = $this->bindings['groupBy'] ?? [];
+        $idsQuery->bindings['having'] = $this->bindings['having'] ?? [];
+        $idsQuery->bindings['union'] = $this->bindings['union'] ?? [];
+        $idsQuery->bindings['unionOrder'] = $this->bindings['unionOrder'] ?? [];
+
+        if ($keepOrders) {
+            $idsQuery->bindings['order'] = $this->bindings['order'] ?? [];
+        }
+
+        return $idsQuery;
+    }
+
+    protected function orderByIdsBySequence(Builder $builder, array $ids, string $qualifiedIdColumn): void
+    {
+        if (empty($ids)) {
+            return;
+        }
+
+        $driver = $this->connection->getDriverName();
+        if (in_array($driver, ['mysql', 'mariadb'], true)) {
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            $builder->orderByRaw("FIELD($qualifiedIdColumn, $placeholders)", $ids);
+            return;
+        }
+
+        $cases = [];
+        $bindings = [];
+        foreach (array_values($ids) as $index => $id) {
+            $cases[] = 'WHEN ? THEN ?';
+            $bindings[] = $id;
+            $bindings[] = $index;
+        }
+
+        $builder->orderByRaw('CASE ' . $qualifiedIdColumn . ' ' . implode(' ', $cases) . ' END', $bindings);
     }
 
     public function groupByContextFields()
