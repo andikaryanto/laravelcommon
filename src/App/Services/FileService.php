@@ -6,6 +6,7 @@ use DateTime;
 use Exception;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use LaravelCommon\App\Models\_Reserved\File;
 use LaravelCommon\App\Trait\TenantPathCreator;
 
@@ -42,6 +43,13 @@ class FileService
     protected array $fileTypes = [];
 
     /**
+     * Filesystem disk used for upload and delete.
+     *
+     * @var string|null
+     */
+    protected ?string $disk = null;
+
+    /**
      * Use-timed will auto add prefix datetime name of your file name.
      *
      * @param boolean $useTimed
@@ -73,9 +81,19 @@ class FileService
      */
     public function allowedFileTypes(array $fileTypes = []): FileService
     {
-        foreach ($fileTypes as $fileType) {
-            $this->fileTypes[] = strtolower($fileType);
-        }
+        $this->fileTypes = array_map(fn($fileType) => strtolower($fileType), $fileTypes);
+        return $this;
+    }
+
+    /**
+     * Set filesystem disk name explicitly.
+     *
+     * @param string $disk
+     * @return FileService
+     */
+    public function useDisk(string $disk): FileService
+    {
+        $this->disk = $disk;
         return $this;
     }
 
@@ -89,6 +107,10 @@ class FileService
      */
     public function upload(UploadedFile $uploadedFile, string $path): File
     {
+        if (!$uploadedFile->isValid()) {
+            throw new Exception($uploadedFile->getErrorMessage());
+        }
+
         $fileType = $uploadedFile->getClientOriginalExtension();
 
         if (
@@ -98,29 +120,40 @@ class FileService
             throw new Exception("file type of '$fileType' is not allowed");
         }
 
-        $dateTime = new DateTime();
-        $year = $dateTime->format('Y');
-        $month = $dateTime->format('m');
+        $storage = Storage::disk($this->getDisk());
+        $uploadPath = $this->resolveUploadPath($path);
+        $fileName = $this->resolveUploadFileName($uploadedFile);
+        $targetPath = $this->buildTargetPath($uploadPath, $fileName);
 
-        $path .= "$year/$month";
-        $publiPath = $this->ensureTenantPublicPath($path);
-
-        if ($this->hashedName) {
-            $path = $uploadedFile->store($publiPath);
-        } else {
-            $path = $uploadedFile->storeAs($publiPath, $uploadedFile->getClientOriginalName());
+        $stream = fopen($uploadedFile->getPathname(), 'rb');
+        if ($stream === false) {
+            throw new Exception('Failed to open uploaded file stream');
         }
 
-        if (is_bool($path)) {
-            throw new Exception("Failed to move file");
+        $result = $storage->writeStream($targetPath, $stream);
+        if (is_resource($stream)) {
+            fclose($stream);
+        }
+
+        $path = $result === false ? false : $targetPath;
+
+        if (!$path) {
+            throw new Exception(
+                sprintf(
+                    "Failed to move file to disk '%s' with target '%s'",
+                    $this->getDisk(),
+                    $targetPath ?? 'unknown'
+                )
+            );
         }
 
         $extension = $uploadedFile->getClientOriginalExtension();
         $size = $uploadedFile->getSize();
         $type = $uploadedFile->getMimeType();
+        $storedPath = $this->resolveStoredPath($storage, $path);
 
         $file = new File();
-        $file->setName($path);
+        $file->setName($storedPath);
         $file->setOriginalName($uploadedFile->getClientOriginalName());
         $file->setExtension($extension);
         $file->setMimeType($type);
@@ -173,13 +206,161 @@ class FileService
      */
     public function unlinkFiles()
     {
+        $storage = Storage::disk($this->getDisk());
         foreach ($this->files as $file) {
-            Storage::delete($file->getName());
+            $storage->delete($this->normalizePathForDisk($file->getName()));
         }
     }
 
     public function unlink($path): bool
     {
-        return Storage::delete($path);
+        return Storage::disk($this->getDisk())->delete($this->normalizePathForDisk($path));
+    }
+
+    /**
+     * Get active filesystem disk.
+     *
+     * @return string
+     */
+    private function getDisk(): string
+    {
+        return $this->disk ?? config('filesystems.default', 'local');
+    }
+
+    /**
+     * Resolve upload path based on active filesystem driver.
+     *
+     * Local/public keeps legacy tenant + year/month path.
+     * S3 keeps only provided path (no forced local-style directory).
+     *
+     * @param string $path
+     * @return string
+     */
+    private function resolveUploadPath(string $path): string
+    {
+        $normalizedPath = trim($path, '/');
+        if ($this->isS3Disk()) {
+            return $normalizedPath === '' ? '' : Str::slug($normalizedPath);
+        }
+
+        $dateTime = new DateTime();
+        $year = $dateTime->format('Y');
+        $month = $dateTime->format('m');
+        $tenantPath = trim($this->buildTenantPath() ?? '', '/');
+
+        return implode(
+            '/',
+            array_filter(['public', $tenantPath, $normalizedPath, $year, $month], fn($segment) => $segment !== '')
+        );
+    }
+
+    /**
+     * Determine whether active filesystem driver is s3.
+     *
+     * @return bool
+     */
+    private function isS3Disk(): bool
+    {
+        $driver = config('filesystems.disks.' . $this->getDisk() . '.driver');
+        return $driver === 's3';
+    }
+
+    /**
+     * Build final upload key.
+     *
+     * S3 key is flat (no slash path separator).
+     *
+     * @param string $uploadPath
+     * @param string $fileName
+     * @return string
+     */
+    private function buildTargetPath(string $uploadPath, string $fileName): string
+    {
+        if ($this->isS3Disk()) {
+            return trim(($uploadPath !== '' ? $uploadPath . '-' : '') . $fileName, '-');
+        }
+
+        return trim($uploadPath . '/' . $fileName, '/');
+    }
+
+    /**
+     * Build upload filename. S3 uses slug to avoid unsafe object key names.
+     *
+     * @param UploadedFile $uploadedFile
+     * @return string
+     */
+    private function resolveUploadFileName(UploadedFile $uploadedFile): string
+    {
+        if ($this->hashedName) {
+            $nameWithoutExtension = pathinfo($uploadedFile->hashName(), PATHINFO_FILENAME);
+            $extension = $uploadedFile->getClientOriginalExtension();
+        } else {
+            $nameWithoutExtension = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
+            $extension = $uploadedFile->getClientOriginalExtension();
+        }
+
+        if ($this->timed) {
+            $nameWithoutExtension = (new DateTime())->format('YmdHis') . '-' . $nameWithoutExtension;
+        }
+
+        if ($this->isS3Disk()) {
+            $nameWithoutExtension = Str::slug($nameWithoutExtension);
+            if ($nameWithoutExtension === '') {
+                $nameWithoutExtension = 'file';
+            }
+        }
+
+        if ($extension === '') {
+            return $nameWithoutExtension;
+        }
+
+        return $nameWithoutExtension . '.' . strtolower($extension);
+    }
+
+    /**
+     * Return stored path format based on active disk.
+     *
+     * @param mixed $storage
+     * @param string $path
+     * @return string
+     */
+    private function resolveStoredPath($storage, string $path): string
+    {
+        if (!$this->isS3Disk()) {
+            return $path;
+        }
+
+        return $storage->url($path);
+    }
+
+    /**
+     * Normalize provided path/url to disk key for delete operation.
+     *
+     * @param string $path
+     * @return string
+     */
+    private function normalizePathForDisk(string $path): string
+    {
+        if (!$this->isS3Disk()) {
+            return $path;
+        }
+
+        if (!Str::startsWith($path, ['http://', 'https://'])) {
+            return ltrim($path, '/');
+        }
+
+        $parsedPath = parse_url($path, PHP_URL_PATH);
+        if (!is_string($parsedPath)) {
+            return $path;
+        }
+
+        $normalized = ltrim($parsedPath, '/');
+        $bucket = trim((string) config('filesystems.disks.' . $this->getDisk() . '.bucket'), '/');
+
+        if ($bucket !== '' && Str::startsWith($normalized, $bucket . '/')) {
+            return substr($normalized, strlen($bucket . '/'));
+        }
+
+        return $normalized;
     }
 }
