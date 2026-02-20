@@ -9,7 +9,7 @@ class EagerService
 {
     public static function getEager(Model $owner, string $method = null): mixed
     {
-        if(is_null($method)) {
+        if (is_null($method)) {
             return null;
         }
 

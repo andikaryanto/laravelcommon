@@ -46,10 +46,10 @@ class HasOneRelation extends AbstractRelation
     {
         $eagerModel = EagerService::getEager($this->ownerModel, $this->name);
 
-        if($eagerModel) {
+        if ($eagerModel) {
             $this->set($eagerModel);
         }
-        
+
         if (!is_null($this->ownedModel)) {
             return $this->ownedModel;
         }
