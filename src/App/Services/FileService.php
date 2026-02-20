@@ -218,6 +218,34 @@ class FileService
     }
 
     /**
+     * Unlink a path by trying multiple disks and possible path formats.
+     *
+     * @param string $path
+     * @param array|null $disks
+     * @return bool
+     */
+    public function unlinkFromAvailableDisks(string $path, ?array $disks = null): bool
+    {
+        $candidateDisks = $disks ?? [
+            config('filesystems.default'),
+            's3',
+            'local',
+            'public'
+        ];
+        $candidateDisks = array_values(array_unique(array_filter($candidateDisks)));
+
+        foreach ($candidateDisks as $disk) {
+            foreach ($this->resolveCandidatePathsForDisk($path, $disk) as $candidatePath) {
+                if ($this->useDisk($disk)->unlink($candidatePath)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Get active filesystem disk.
      *
      * @return string
@@ -362,5 +390,43 @@ class FileService
         }
 
         return $normalized;
+    }
+
+    /**
+     * Resolve possible path variants for a given disk.
+     *
+     * @param string $path
+     * @param string $disk
+     * @return array
+     */
+    private function resolveCandidatePathsForDisk(string $path, string $disk): array
+    {
+        $candidates = [];
+
+        $trimmedPath = ltrim($path, '/');
+        if ($path !== '') {
+            $candidates[] = $path;
+        }
+        if ($trimmedPath !== '') {
+            $candidates[] = $trimmedPath;
+        }
+
+        if ($disk === 'public' && str_starts_with($trimmedPath, 'public/')) {
+            $candidates[] = substr($trimmedPath, strlen('public/'));
+        }
+
+        $parsedPath = parse_url($path, PHP_URL_PATH);
+        if (is_string($parsedPath) && $parsedPath !== '') {
+            $normalizedParsedPath = ltrim($parsedPath, '/');
+            if ($normalizedParsedPath !== '') {
+                $candidates[] = $normalizedParsedPath;
+            }
+
+            if ($disk === 'public' && str_starts_with($normalizedParsedPath, 'public/')) {
+                $candidates[] = substr($normalizedParsedPath, strlen('public/'));
+            }
+        }
+
+        return array_values(array_unique(array_filter($candidates)));
     }
 }
