@@ -167,9 +167,9 @@ class BelongsToManyRelation extends AbstractRelation implements IteratorAggregat
 
         $existCollection = EagerService::getEager($this->parentModel, $this->name);
 
-        if(!$existCollection) {
+        if (!$existCollection) {
             $existCollection = $this->getRelation()->get();
-        } 
+        }
 
         foreach ($existCollection as $existModel) {
             $allCollection->add($existModel);

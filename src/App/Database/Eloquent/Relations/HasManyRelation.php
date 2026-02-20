@@ -59,7 +59,7 @@ class HasManyRelation extends AbstractRelation
              */
             $all = $this->getRelation()->get();
         }
-        
+
         // $this->addModelCollection will be emptied using emptyAddedModelCollection when data is persisted
         // so when it's not persisted the idea is to get the persisted relation and added collection.
         // when data persisted means $this->addModelCollection is in database then $this->getRelation()->get()

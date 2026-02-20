@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Scope extends BaseModel
 {
     use HasFactory;
-    
+
     /**
      *
      * @return ?string
