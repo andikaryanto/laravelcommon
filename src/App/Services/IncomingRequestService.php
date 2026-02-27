@@ -3,13 +3,13 @@
 namespace LaravelCommon\App\Services;
 
 use LaravelCommon\App\Models\User;
-use LaravelCommon\System\Http\Request;
+use LaravelCommon\System\Http\CommonRequest;
 
 class IncomingRequestService
 {
     public function getUser(): ?User
     {
-        if (request() instanceof Request) {
+        if (request() instanceof CommonRequest) {
             return request()->getUserToken()?->getUser();
         }
 

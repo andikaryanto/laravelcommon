@@ -12,7 +12,7 @@ use LaravelCommon\App\Queries\User\TokenQuery;
 use LaravelCommon\App\Services\Jwt;
 use LaravelCommon\Responses\BadRequestResponse;
 use LaravelCommon\Responses\UnauthorizedResponse;
-use LaravelCommon\System\Http\Request;
+use LaravelCommon\System\Http\CommonRequest;
 
 class CheckTokenMiddleware
 {
@@ -51,7 +51,7 @@ class CheckTokenMiddleware
      * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
-    public function handle(Request $request, Closure $next)
+    public function handle(CommonRequest $request, Closure $next)
     {
         try {
             $authorization = Cookie::get('access_token');

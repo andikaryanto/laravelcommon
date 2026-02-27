@@ -7,7 +7,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Validator;
 use LaravelCommon\App\Consts\ResponseConst;
 use LaravelCommon\Responses\JsonResponse;
-use LaravelCommon\System\Http\Request;
+use LaravelCommon\System\Http\CommonRequest;
 
 class RequestValidatorMiddleware
 {
@@ -19,7 +19,7 @@ class RequestValidatorMiddleware
      * @param  string|null  ...$guards
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
-    public function handle(Request $request, Closure $next, ...$methods)
+    public function handle(CommonRequest $request, Closure $next, ...$methods)
     {
         $method = $methods[0];
         $rules = $this->$method();

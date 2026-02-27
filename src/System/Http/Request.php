@@ -3,12 +3,11 @@
 namespace LaravelCommon\System\Http;
 
 use LaravelCommon\App\Repositories\User\TokenRepository;
-use Illuminate\Http\Request as HttpRequest;
 use LaravelCommon\App\Models\User\Token;
 use LaravelCommon\App\Http\Middleware\HydratorMiddleware;
 use LaravelCommon\App\Models\Branch;
 
-class Request extends HttpRequest
+class Request extends CommonRequest
 {
     /**
      * @var TokenRepository $tokenRepository

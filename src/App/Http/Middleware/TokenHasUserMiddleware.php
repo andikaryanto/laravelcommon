@@ -6,7 +6,7 @@ use Closure;
 use Exception;
 use LaravelCommon\App\Consts\ResponseConst;
 use LaravelCommon\Responses\BadRequestResponse;
-use LaravelCommon\System\Http\Request;
+use LaravelCommon\System\Http\CommonRequest;
 
 class TokenHasUserMiddleware
 {
@@ -17,7 +17,7 @@ class TokenHasUserMiddleware
      * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
-    public function handle(Request $request, Closure $next)
+    public function handle(CommonRequest $request, Closure $next)
     {
         try {
             $userToken = $request->getUserToken();

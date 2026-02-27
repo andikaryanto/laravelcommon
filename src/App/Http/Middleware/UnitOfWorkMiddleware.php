@@ -8,7 +8,7 @@ use LaravelCommon\App\Consts\ResponseConst;
 use LaravelCommon\Exceptions\ResponsableException;
 use LaravelCommon\Responses\BadRequestResponse;
 use LaravelCommon\Responses\BaseResponse;
-use LaravelCommon\System\Http\Request;
+use LaravelCommon\System\Http\CommonRequest;
 use LaravelCommon\Utilities\Database\UnitOfWork as DatabaseUnitOfWork;
 
 class UnitOfWorkMiddleware
@@ -39,7 +39,7 @@ class UnitOfWorkMiddleware
      * @param  string|null  ...$guards
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
-    public function handle(Request $request, Closure $next, $method)
+    public function handle(CommonRequest $request, Closure $next, $method)
     {
         $response = $next($request);
 
