@@ -3,7 +3,7 @@
 namespace LaravelCommon\App\Http;
 
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
-use LaravelCommon\System\Http\Request;
+use LaravelCommon\System\Http\CommonRequest;
 
 class Kernel extends HttpKernel
 {
@@ -16,7 +16,7 @@ class Kernel extends HttpKernel
     public function handle($request)
     {
         return parent::handle(
-            Request::createFrom($request)
+            CommonRequest::createFrom($request)
         );
     }
 
