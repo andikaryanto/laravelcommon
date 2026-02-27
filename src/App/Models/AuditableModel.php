@@ -14,6 +14,11 @@ use ReflectionProperty;
 
 trait AuditableModel
 {
+    public function auditable(): bool
+    {
+        return true;
+    }
+
     /**
      * Get the value of created_by
      */

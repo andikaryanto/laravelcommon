@@ -7,4 +7,5 @@ use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 class BaseModel extends Model
 {
     use UsesTenantConnection;
+    use AuditableModel;
 }

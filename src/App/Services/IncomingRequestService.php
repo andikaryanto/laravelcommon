@@ -7,7 +7,7 @@ use LaravelCommon\System\Http\CommonRequest;
 
 class IncomingRequestService
 {
-    public function getUser(): ?User
+    public function getUser()
     {
         if (request() instanceof CommonRequest) {
             return request()->getUserToken()?->getUser();

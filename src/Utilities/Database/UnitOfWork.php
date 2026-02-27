@@ -49,12 +49,14 @@ class UnitOfWork
         // $modelScope = ModelScope::getInstance();
         $this->startTransaction();
         try {
-            if (empty($model->getId()) && $this->incomingRequestService->getUser()) {
-                $model->setCreatedBy($this->incomingRequestService->getUser());
-            }
+            if($model->auditable()) {
+                if (empty($model->getId()) && $this->incomingRequestService->getUser()) {
+                    $model->setCreatedBy($this->incomingRequestService->getUser());
+                }
 
-            if (!empty($model->getId()) && $this->incomingRequestService->getUser()) {
-                $model->setUpdatedBy($this->incomingRequestService->getUser());
+                if (!empty($model->getId()) && $this->incomingRequestService->getUser()) {
+                    $model->setUpdatedBy($this->incomingRequestService->getUser());
+                }
             }
 
             $reflectionClass = new ReflectionClass($model);

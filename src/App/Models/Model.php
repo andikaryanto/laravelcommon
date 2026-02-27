@@ -12,8 +12,6 @@ use ReflectionProperty;
 
 class Model extends EloquentModel
 {
-    use AuditableModel;
-
     public function __construct(array $attributes = [])
     {
         $reflectionClass = new ReflectionClass($this);
