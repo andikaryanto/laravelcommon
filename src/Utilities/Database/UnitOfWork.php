@@ -49,7 +49,7 @@ class UnitOfWork
         // $modelScope = ModelScope::getInstance();
         $this->startTransaction();
         try {
-            if($model->auditable()) {
+            if ($model->auditable()) {
                 if (empty($model->getId()) && $this->incomingRequestService->getUser()) {
                     $model->setCreatedBy($this->incomingRequestService->getUser());
                 }
