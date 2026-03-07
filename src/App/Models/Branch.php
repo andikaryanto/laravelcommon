@@ -3,11 +3,40 @@
 namespace LaravelCommon\App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use LaravelCommon\App\Database\Eloquent\Relations\BelongsToRelation;
 use LaravelCommon\App\Models\BaseModel;
 
 class Branch extends BaseModel
 {
     use HasFactory;
+
+    protected BelongsToRelation $pricing;
+
+    public function __construct(array $attributes = [])
+    {
+        $this->pricing = new BelongsToRelation($this, Pricing::class, 'pricing_id');
+        parent::__construct($attributes);
+    }
+
+    /**
+     *
+     * @return ?Pricing
+     */
+    public function getPricing(): ?Pricing
+    {
+        return $this->pricing->get();
+    }
+
+    /**
+     *
+     * @param Pricing $pricing
+     * @return Branch
+     */
+    public function setPricing(Pricing $pricing): Branch
+    {
+        $this->pricing->set($pricing);
+        return $this;
+    }
 
     /**
      *

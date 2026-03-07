@@ -17,6 +17,13 @@ class BranchViewModel extends AbstractViewModel
      */
     protected $model;
 
+    public static function loadWith()
+    {
+        return [
+            'pricing' => PricingViewModel::loadWith()
+        ];
+    }
+
     /**
      *
      * @inheritdoc
@@ -31,6 +38,10 @@ class BranchViewModel extends AbstractViewModel
      */
     public function addResource()
     {
+        $pricing = $this->model->getPricing();
+        if (!empty($pricing)) {
+            $this->embedResource('pricing', new PricingViewModel($pricing, $this->request));
+        }
 
         return $this;
     }
