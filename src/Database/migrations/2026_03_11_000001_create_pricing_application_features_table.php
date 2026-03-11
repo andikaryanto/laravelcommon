@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('pricing_id');
             $table->unsignedBigInteger('application_feature_id');
+            $table->boolean('is_active')->default(false);
             $table->auditable();
             $table->timestamps();
 
