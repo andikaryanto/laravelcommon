@@ -30,6 +30,20 @@ abstract class AbstractCollection
         return [];
     }
 
+    protected function getEmbeds(): array
+    {
+        if (is_null($this->request)) {
+            return [];
+        }
+
+        $embed = $this->request->get('embed', []);
+        if (is_string($embed)) {
+            $embed = array_map('trim', explode(',', $embed));
+        }
+
+        return is_array($embed) ? $embed : [];
+    }
+
     public function loadRelation()
     {
         if (!empty($this->loadWith())) {

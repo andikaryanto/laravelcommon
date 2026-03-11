@@ -17,10 +17,10 @@ class BranchViewModel extends AbstractViewModel
      */
     protected $model;
 
-    public static function loadWith()
+    public static function loadWith(array $embeds = [])
     {
         return [
-            'pricing' => PricingViewModel::loadWith()
+            'pricing' => PricingViewModel::loadWith($embeds)
         ];
     }
 

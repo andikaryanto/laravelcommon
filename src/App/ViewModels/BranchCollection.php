@@ -10,7 +10,7 @@ class BranchCollection extends PaggedCollection
 {
     public function loadWith(): array
     {
-        return BranchViewModel::loadWith();
+        return BranchViewModel::loadWith($this->getEmbeds());
     }
 
     /**

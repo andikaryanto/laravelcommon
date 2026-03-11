@@ -10,7 +10,7 @@ class PricingCollection extends PaggedCollection
 {
     public function loadWith(): array
     {
-        return PricingViewModel::loadWith();
+        return PricingViewModel::loadWith($this->getEmbeds());
     }
 
     /**
