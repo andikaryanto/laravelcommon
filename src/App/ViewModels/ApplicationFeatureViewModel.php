@@ -2,10 +2,10 @@
 
 namespace LaravelCommon\App\ViewModels;
 
-use LaravelCommon\App\Models\Pricing;
+use LaravelCommon\App\Models\ApplicationFeature;
 use LaravelCommon\ViewModels\AbstractViewModel;
 
-class PricingViewModel extends AbstractViewModel
+class ApplicationFeatureViewModel extends AbstractViewModel
 {
     /**
      * @var bool $autoAddResource;
@@ -13,10 +13,13 @@ class PricingViewModel extends AbstractViewModel
     protected $isAutoAddResource = true;
 
     /**
-     * @var Pricing $model
+     * @var ApplicationFeature
      */
     protected $model;
 
+    /**
+     * @inheritdoc
+     */
     public function addResource()
     {
         return $this;
@@ -29,6 +32,7 @@ class PricingViewModel extends AbstractViewModel
     {
         return [
             'id' => $this->model->getId(),
+            'key' => $this->model->getFeatureKey(),
             'name' => $this->model->getName(),
             'description' => $this->model->getDescription()
         ];
