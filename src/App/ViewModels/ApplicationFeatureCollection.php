@@ -10,7 +10,7 @@ class ApplicationFeatureCollection extends PaggedCollection
 {
     public function loadWith(): array
     {
-        return ApplicationFeatureViewModel::loadWith();
+        return ApplicationFeatureViewModel::loadWith($this->getEmbeds());
     }
 
     /**

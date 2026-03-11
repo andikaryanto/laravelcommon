@@ -19,10 +19,10 @@ class TokenViewModel extends AbstractViewModel
      */
     protected $model;
 
-    public static function loadWith()
+    public static function loadWith(array $embeds = [])
     {
         return [
-            'user' => UserViewModel::loadWith()
+            'user' => UserViewModel::loadWith($embeds)
         ];
     }
 

@@ -10,7 +10,7 @@ class ScopeCollection extends PaggedCollection
 {
     public function loadWith(): array
     {
-        return ScopeViewModel::loadWith();
+        return ScopeViewModel::loadWith($this->getEmbeds());
     }
 
     /**

@@ -41,15 +41,29 @@ abstract class AbstractViewModel
         return '#unimplemented';
     }
 
-    public static function loadWith()
+    public static function loadWith(array $embeds = [])
     {
         return [];
     }
 
     public function loadRelation()
     {
-        $this->model->load(static::loadWith());
+        $this->model->load(static::loadWith($this->getEmbeds()));
         return $this;
+    }
+
+    protected function getEmbeds(): array
+    {
+        if (is_null($this->request)) {
+            return [];
+        }
+
+        $embed = $this->request->get('embed', []);
+        if (is_string($embed)) {
+            $embed = array_map('trim', explode(',', $embed));
+        }
+
+        return is_array($embed) ? $embed : [];
     }
 
     /**

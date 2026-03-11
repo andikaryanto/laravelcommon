@@ -10,7 +10,7 @@ class GroupuserCollection extends PaggedCollection
 {
     public function loadWith(): array
     {
-        return GroupuserViewModel::loadWith();
+        return GroupuserViewModel::loadWith($this->getEmbeds());
     }
 
     /**

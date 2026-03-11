@@ -10,7 +10,7 @@ class LoggingConfigCollection extends PaggedCollection
 {
     public function loadWith(): array
     {
-        return LoggingConfigViewModel::loadWith();
+        return LoggingConfigViewModel::loadWith($this->getEmbeds());
     }
 
     /**

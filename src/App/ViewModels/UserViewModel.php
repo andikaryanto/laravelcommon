@@ -19,12 +19,12 @@ class UserViewModel extends AbstractViewModel
      */
     protected $model;
 
-    public static function loadWith()
+    public static function loadWith(array $embeds = [])
     {
         return [
-            'groupuser' => GroupuserViewModel::loadWith(),
-            'scopes' => ScopeViewModel::loadWith(),
-            'branch' => BranchViewModel::loadWith()
+            'groupuser' => GroupuserViewModel::loadWith($embeds),
+            'scopes' => ScopeViewModel::loadWith($embeds),
+            'branch' => BranchViewModel::loadWith($embeds)
         ];
     }
 

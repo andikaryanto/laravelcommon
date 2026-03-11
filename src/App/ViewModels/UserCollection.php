@@ -11,7 +11,7 @@ class UserCollection extends PaggedCollection
 {
     public function loadWith(): array
     {
-        return UserViewModel::loadWith();
+        return UserViewModel::loadWith($this->getEmbeds());
     }
 
     /**

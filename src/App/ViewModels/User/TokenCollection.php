@@ -10,7 +10,7 @@ class TokenCollection extends PaggedCollection
 {
     public function loadWith(): array
     {
-        return TokenViewModel::loadWith();
+        return TokenViewModel::loadWith($this->getEmbeds());
     }
 
     /**
