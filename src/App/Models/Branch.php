@@ -11,10 +11,12 @@ class Branch extends BaseModel
     use HasFactory;
 
     protected BelongsToRelation $pricing;
+    protected BelongsToRelation $selectedPricing;
 
     public function __construct(array $attributes = [])
     {
         $this->pricing = new BelongsToRelation($this, Pricing::class, 'pricing_id');
+        $this->selectedPricing = new BelongsToRelation($this, Pricing::class, 'selected_pricing_id');
         parent::__construct($attributes);
     }
 
@@ -35,6 +37,26 @@ class Branch extends BaseModel
     public function setPricing(Pricing $pricing): Branch
     {
         $this->pricing->set($pricing);
+        return $this;
+    }
+
+    /**
+     *
+     * @return ?Pricing
+     */
+    public function getSelectedPricing(): ?Pricing
+    {
+        return $this->selectedPricing->get();
+    }
+
+    /**
+     *
+     * @param Pricing $pricing
+     * @return Branch
+     */
+    public function setSelectedPricing(Pricing $pricing): Branch
+    {
+        $this->selectedPricing->set($pricing);
         return $this;
     }
 
