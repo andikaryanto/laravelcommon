@@ -76,7 +76,7 @@ class Query extends Builder
         return $this;
     }
 
-    protected function getSelectColumns()
+    public function getSelectColumns()
     {
         $connectionName = $this->connection->getName();
         $databaseName = $this->connection->getDatabaseName() ?? '';
