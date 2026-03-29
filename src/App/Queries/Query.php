@@ -8,7 +8,7 @@ use Illuminate\Database\Query\Processors\Processor;
 use Illuminate\Database\Query\Grammars\Grammar;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB;
+use LaravelCommon\System\Support\DB as CommonDB;
 
 class Query extends Builder
 {
@@ -51,15 +51,7 @@ class Query extends Builder
         ?Grammar $grammar = null,
         ?Processor $processor = null
     ) {
-        if (config('multitenancy.enabled', true) && app()->bound('currentTenant')) {
-            $connection = DB::connection('tenant');
-            $currentTenant = app('currentTenant');
-            if (!is_null($currentTenant) && isset($currentTenant->database)) {
-                $connection->setDatabaseName($currentTenant->database);
-            }
-        } else {
-            $connection = DB::connection();
-        }
+        $connection = CommonDB::connection();
 
         $grammar = $connection->query()->getGrammar();
         parent::__construct($connection, $grammar);
@@ -76,7 +68,7 @@ class Query extends Builder
         return $this;
     }
 
-    protected function getSelectColumns()
+    public function getSelectColumns()
     {
         $connectionName = $this->connection->getName();
         $databaseName = $this->connection->getDatabaseName() ?? '';
@@ -195,7 +187,7 @@ class Query extends Builder
                 $tableAndId = $this->table . '.' . $this->model->getKeyName();
                 $distinctIdsQuery = $this->buildDistinctIdsQuery($tableAndId, false);
 
-                $this->total = DB::query()
+                $this->total = CommonDB::query()
                     ->fromSub($distinctIdsQuery, 'distinct_ids')
                     ->count();
 
