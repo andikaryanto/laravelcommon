@@ -10,6 +10,7 @@ use LaravelCommon\App\Database\Eloquent\Relations\BelongsToRelation;
 use LaravelCommon\App\Database\Eloquent\Relations\HasManyRelation;
 use LaravelCommon\App\Models\AuthenticableBaseModel;
 use LaravelCommon\App\Models\Model as ModelsModel;
+use LaravelCommon\App\Models\User;
 use LaravelCommon\App\Queries\Query;
 use LaravelCommon\App\Services\IncomingRequestService;
 use LaravelCommon\Exceptions\ValidationException;
@@ -49,13 +50,15 @@ class UnitOfWork
         // $modelScope = ModelScope::getInstance();
         $this->startTransaction();
         try {
+            $auditUser = $this->resolveAuditUser($model);
+
             if ($model->auditable()) {
-                if (empty($model->getId()) && $this->incomingRequestService->getUser()) {
-                    $model->setCreatedBy($this->incomingRequestService->getUser());
+                if (empty($model->getId()) && $auditUser) {
+                    $model->setCreatedBy($auditUser);
                 }
 
-                if (!empty($model->getId()) && $this->incomingRequestService->getUser()) {
-                    $model->setUpdatedBy($this->incomingRequestService->getUser());
+                if (!empty($model->getId()) && $auditUser) {
+                    $model->setUpdatedBy($auditUser);
                 }
             }
 
@@ -196,5 +199,29 @@ class UnitOfWork
             $this->rollback();
             throw $e;
         }
+    }
+
+    protected function resolveAuditUser(ModelsModel|AuthenticableBaseModel $model): ?User
+    {
+        $requestUser = $this->incomingRequestService->getUser();
+
+        if ($model->getConnectionName() === 'tenant' && !$requestUser instanceof User) {
+            return null;
+        }
+
+        if (!$requestUser instanceof User) {
+            return null;
+        }
+
+        $connectionName = $model->getConnectionName();
+
+        if ($connectionName === null || $requestUser->getConnectionName() === $connectionName) {
+            return $requestUser;
+        }
+
+        return (new User([], true))
+            ->setConnection($connectionName)
+            ->newQuery()
+            ->find($requestUser->getId());
     }
 }
