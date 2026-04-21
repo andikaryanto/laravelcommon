@@ -17,6 +17,7 @@ use LaravelCommon\App\Http\Middleware\ResourceValidationMiddleware;
 use LaravelCommon\System\Database\Schema\Blueprint as SchemaBlueprint;
 use Illuminate\Contracts\Http\Kernel;
 use LaravelCommon\App\Services\IncomingRequestService;
+use LaravelCommon\App\Services\PaymentService;
 use LaravelCommon\Utilities\Database\UnitOfWork as DatabaseUnitOfWork;
 
 class CommonAppServiceProvider extends ServiceProvider
@@ -35,6 +36,10 @@ class CommonAppServiceProvider extends ServiceProvider
         $this->app->singleton(DatabaseUnitOfWork::class, function ($app) {
             $incomingRequestService = $app->make(IncomingRequestService::class);
             return new DatabaseUnitOfWork($incomingRequestService);
+        });
+
+        $this->app->singleton(PaymentService::class, function ($app) {
+            return new PaymentService($app);
         });
     }
 
