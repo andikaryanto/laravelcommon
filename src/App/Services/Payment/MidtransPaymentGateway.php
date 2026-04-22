@@ -55,6 +55,13 @@ class MidtransPaymentGateway implements PaymentGatewayInterface
             $payload['enabled_payments'] = $enabledPayments;
         }
 
+        $customerImposedPaymentFee = $this->buildCustomerImposedPaymentFee(
+            $transactionData['customer_imposed_payment_fee'] ?? []
+        );
+        if ($customerImposedPaymentFee !== []) {
+            $payload['customer_imposed_payment_fee'] = $customerImposedPaymentFee;
+        }
+
         $expiry = $this->buildExpiry($transactionData['expiry'] ?? []);
         if ($expiry !== []) {
             $payload['expiry'] = $expiry;
@@ -208,6 +215,53 @@ class MidtransPaymentGateway implements PaymentGatewayInterface
                 $enabledPayments
             )
         ));
+    }
+
+    protected function buildCustomerImposedPaymentFee(mixed $config): array
+    {
+        if (!is_array($config)) {
+            return [];
+        }
+
+        $isEnabled = filter_var($config['enable'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $paymentFeeConfigs = $config['payment_fee_configs'] ?? [];
+
+        if (!$isEnabled || !is_array($paymentFeeConfigs) || $paymentFeeConfigs === []) {
+            return [];
+        }
+
+        $normalizedConfigs = [];
+
+        foreach ($paymentFeeConfigs as $paymentFeeConfig) {
+            if (!is_array($paymentFeeConfig)) {
+                continue;
+            }
+
+            $paymentType = $paymentFeeConfig['payment_type'] ?? null;
+            $customerPercentage = $paymentFeeConfig['customer_percentage'] ?? null;
+
+            if (!is_string($paymentType) || $paymentType === '') {
+                continue;
+            }
+
+            if (!is_int($customerPercentage) && !is_float($customerPercentage)) {
+                continue;
+            }
+
+            $normalizedConfigs[] = [
+                'payment_type' => $paymentType,
+                'customer_percentage' => $customerPercentage,
+            ];
+        }
+
+        if ($normalizedConfigs === []) {
+            return [];
+        }
+
+        return [
+            'enable' => true,
+            'payment_fee_configs' => $normalizedConfigs,
+        ];
     }
 
     protected function buildExpiry(mixed $expiry): array
