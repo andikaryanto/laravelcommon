@@ -4,10 +4,12 @@ namespace LaravelCommon\App\Providers;
 
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\ServiceProvider;
+use LaravelCommon\App\Contracts\PaymentGatewayInterface;
 use LaravelCommon\App\Console\Commands\CreateLoggingName;
 use LaravelCommon\App\Console\Commands\CreateScope;
 use LaravelCommon\App\Console\Commands\EnableLoggingName;
 use LaravelCommon\App\Console\Commands\GenerateEntity;
+use LaravelCommon\App\Exceptions\PaymentGatewayException;
 use LaravelCommon\App\Http\Middleware\CheckScopeMiddleware;
 use LaravelCommon\App\Http\Middleware\CheckTokenMiddleware;
 use LaravelCommon\App\Http\Middleware\ApiResponseMiddleware;
@@ -38,8 +40,50 @@ class CommonAppServiceProvider extends ServiceProvider
             return new DatabaseUnitOfWork($incomingRequestService);
         });
 
+        $this->app->singleton(PaymentGatewayInterface::class, function ($app) {
+            $gateway = config('common-config.payment.default_gateway');
+
+            if (!is_string($gateway) || $gateway === '') {
+                throw new PaymentGatewayException('Default payment gateway is not configured');
+            }
+
+            $gatewayConfig = config("common-config.payment.gateways.$gateway");
+
+            if (!is_array($gatewayConfig)) {
+                throw new PaymentGatewayException(
+                    sprintf("Payment gateway '%s' is not registered", $gateway)
+                );
+            }
+
+            $driverClass = $gatewayConfig['driver'] ?? null;
+
+            if (!is_string($driverClass) || $driverClass === '') {
+                throw new PaymentGatewayException(
+                    sprintf("Payment gateway driver for '%s' is not configured", $gateway)
+                );
+            }
+
+            $driver = $app->make($driverClass, [
+                'config' => $gatewayConfig,
+            ]);
+
+            if (!$driver instanceof PaymentGatewayInterface) {
+                throw new PaymentGatewayException(
+                    sprintf(
+                        "Payment gateway driver '%s' must implement %s",
+                        $driverClass,
+                        PaymentGatewayInterface::class
+                    )
+                );
+            }
+
+            return $driver;
+        });
+
         $this->app->singleton(PaymentService::class, function ($app) {
-            return new PaymentService($app);
+            return new PaymentService(
+                $app->make(PaymentGatewayInterface::class)
+            );
         });
     }
 
