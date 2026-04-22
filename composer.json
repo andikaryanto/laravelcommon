@@ -3,7 +3,8 @@
     "description": "Contains common class that can be used in Ci4 dependency injection of symfony",
     "type": "library",
     "require": {
-        "php": ">=8.0"
+        "php": ">=8.0",
+        "midtrans/midtrans-php": "^2.6"
     },
     "require-dev": {
         "squizlabs/php_codesniffer": "^3.7"
