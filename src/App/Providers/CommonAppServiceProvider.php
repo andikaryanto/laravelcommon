@@ -19,6 +19,7 @@ use LaravelCommon\App\Http\Middleware\ResourceValidationMiddleware;
 use LaravelCommon\System\Database\Schema\Blueprint as SchemaBlueprint;
 use Illuminate\Contracts\Http\Kernel;
 use LaravelCommon\App\Services\IncomingRequestService;
+use LaravelCommon\App\Services\Payment\NullPaymentGateway;
 use LaravelCommon\App\Services\PaymentService;
 use LaravelCommon\Utilities\Database\UnitOfWork as DatabaseUnitOfWork;
 
@@ -44,7 +45,7 @@ class CommonAppServiceProvider extends ServiceProvider
             $gateway = config('common-config.payment.default_gateway');
 
             if (!is_string($gateway) || $gateway === '') {
-                throw new PaymentGatewayException('Default payment gateway is not configured');
+                return new NullPaymentGateway();
             }
 
             $gatewayConfig = config("common-config.payment.gateways.$gateway");
