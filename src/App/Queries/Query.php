@@ -187,7 +187,7 @@ class Query extends Builder
                 $tableAndId = $this->table . '.' . $this->model->getKeyName();
                 $distinctIdsQuery = $this->buildDistinctIdsQuery($tableAndId, false);
 
-                $this->total = CommonDB::query()
+                $this->total = CommonDB::connection()->query()
                     ->fromSub($distinctIdsQuery, 'distinct_ids')
                     ->count();
 
