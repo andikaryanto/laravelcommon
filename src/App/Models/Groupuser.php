@@ -34,7 +34,8 @@ class Groupuser extends BaseModel
      */
     public function setScopes(Collection $scopes)
     {
-        return $this->scopes->set($scopes);
+        $this->scopes->set($scopes);
+        return $this;
     }
 
     /**
